@@ -1,0 +1,2640 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maximum Network Flow Algorithms: Interactive & Animated Comparative Study</title>
+<style>
+  /* ==========================================================================
+     1. CSS VARIABLES & THEME TOKENS (LIGHT & DARK MODE)
+     ========================================================================== */
+  :root {
+    --font-scale: 1;
+    --bg-app: #f1f5f9;
+    --bg-slide: #ffffff;
+    --bg-card: #f8fafc;
+    --bg-card-hover: #f1f5f9;
+    --bg-nav: #0f172a;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --accent-primary: #1e40af;
+    --accent-primary-soft: #dbeafe;
+    --accent-secondary: #0284c7;
+    --accent-emerald: #059669;
+    --accent-emerald-soft: #d1fae5;
+    --accent-amber: #d97706;
+    --accent-amber-soft: #fef3c7;
+    --accent-rose: #dc2626;
+    --accent-rose-soft: #fee2e2;
+    --accent-purple: #7c3aed;
+    --accent-purple-soft: #ede9fe;
+    --shadow-slide: 0 20px 45px -12px rgba(15, 23, 42, 0.12), 0 4px 16px -4px rgba(15, 23, 42, 0.06);
+    --shadow-card: 0 2px 8px rgba(15, 23, 42, 0.04);
+    --svg-bg: #f8fafc;
+    --svg-edge-idle: #94a3b8;
+    --svg-node-fill: #ffffff;
+    --svg-node-stroke: #1e293b;
+    --svg-label-bg: #ffffff;
+  }
+
+  [data-theme="dark"] {
+    --bg-app: #020617;
+    --bg-slide: #0f172a;
+    --bg-card: #1e293b;
+    --bg-card-hover: #334155;
+    --bg-nav: #090d16;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --border-strong: #475569;
+    --accent-primary: #60a5fa;
+    --accent-primary-soft: rgba(59, 130, 246, 0.18);
+    --accent-secondary: #38bdf8;
+    --accent-emerald: #34d399;
+    --accent-emerald-soft: rgba(16, 185, 129, 0.18);
+    --accent-amber: #fbbf24;
+    --accent-amber-soft: rgba(245, 158, 11, 0.18);
+    --accent-rose: #f87171;
+    --accent-rose-soft: rgba(239, 68, 68, 0.18);
+    --accent-purple: #a78bfa;
+    --accent-purple-soft: rgba(139, 92, 246, 0.18);
+    --shadow-slide: 0 25px 50px -12px rgba(0, 0, 0, 0.65);
+    --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.25);
+    --svg-bg: #0b1120;
+    --svg-edge-idle: #475569;
+    --svg-node-fill: #1e293b;
+    --svg-node-stroke: #e2e8f0;
+    --svg-label-bg: #0f172a;
+  }
+
+  /* ==========================================================================
+     2. RESET & BASE LAYOUT (100VH PRESENTER STAGE)
+     ========================================================================== */
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    user-select: none;
+  }
+
+  /* Top Presenter Toolbar */
+  .topbar {
+    height: 48px;
+    background: var(--bg-nav);
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    z-index: 30;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .course-pill {
+    background: rgba(59, 130, 246, 0.22);
+    color: #93c5fd;
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .topbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+  }
+
+  .nav-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .nav-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+
+  .slide-counter {
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    font-weight: 700;
+    color: #cbd5e1;
+    padding: 0 8px;
+  }
+
+  /* Font Size Control Group in Topbar */
+  .font-ctrl-group {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+  }
+
+  .font-ctrl-btn {
+    background: transparent;
+    color: #f1f5f9;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 9px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .font-ctrl-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .font-ctrl-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .font-scale-readout {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #93c5fd;
+    padding: 0 6px;
+    min-width: 44px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+
+  .font-scale-readout:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  /* Progress Bar */
+  .progress-track {
+    height: 3px;
+    width: 100%;
+    background: rgba(148, 163, 184, 0.2);
+    flex-shrink: 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb, #06b6d4);
+    width: 10%;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Main Slide Stage */
+  .stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 22px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .slide-deck {
+    width: 100%;
+    max-width: 1360px;
+    height: 100%;
+    max-height: 770px;
+    background: var(--bg-slide);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    box-shadow: var(--shadow-slide);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Individual Slide Styling & Smooth Transitions */
+  .slide {
+    position: absolute;
+    inset: 0;
+    padding: 22px 30px 16px 30px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(24px) scale(0.99);
+    transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.32s;
+    overflow-y: auto;
+  }
+
+  .slide.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0) scale(1);
+    z-index: 2;
+  }
+
+  .slide.prev-out {
+    opacity: 0;
+    transform: translateX(-24px) scale(0.99);
+  }
+
+  /* Slide Header */
+  .slide-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+
+  .slide-tag {
+    font-size: calc(11px * var(--font-scale));
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-primary);
+    margin-bottom: 3px;
+  }
+
+  .slide-title {
+    font-size: calc(21px * var(--font-scale));
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+
+  .slide-subtitle {
+    font-size: calc(12.5px * var(--font-scale));
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: calc(12px * var(--font-scale));
+    font-weight: 700;
+    background: var(--accent-primary-soft);
+    color: var(--accent-primary);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    white-space: nowrap;
+  }
+
+  /* Slide Footer */
+  .slide-footer {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: calc(11px * var(--font-scale));
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* ==========================================================================
+     3. BENTO GRID & CARD COMPONENTS
+     ========================================================================== */
+  .bento-grid-2 {
+    display: grid;
+    grid-template-columns: 1.24fr 0.76fr;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .bento-grid-equal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .bento-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 13px 15px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .bento-card h3 {
+    font-size: calc(13.5px * var(--font-scale));
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .bento-card p, .bento-card li {
+    font-size: calc(12px * var(--font-scale));
+    line-height: 1.48;
+    color: var(--text-secondary);
+  }
+
+  .bento-card ul {
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .formula-box {
+    background: var(--bg-slide);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent-primary);
+    border-radius: 8px;
+    padding: 7px 11px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: calc(11.5px * var(--font-scale));
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 4px 0;
+  }
+
+  /* ==========================================================================
+     4. HERO TITLE SLIDE (SLIDE 1)
+     ========================================================================== */
+  .title-slide-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 6px;
+  }
+
+  .hero-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #0369a1 100%);
+    color: #ffffff;
+    border-radius: 18px;
+    padding: 32px 36px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 16px 36px -10px rgba(30, 58, 138, 0.45);
+  }
+
+  .hero-banner::after {
+    content: "";
+    position: absolute;
+    right: -60px;
+    top: -60px;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-kicker {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: calc(12px * var(--font-scale));
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    color: #bae6fd;
+  }
+
+  .hero-title {
+    font-size: calc(32px * var(--font-scale));
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    max-width: 900px;
+  }
+
+  .hero-sub {
+    font-size: calc(14px * var(--font-scale));
+    line-height: 1.5;
+    color: #e0f2fe;
+    max-width: 850px;
+  }
+
+  .algo-pills-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 14px 0;
+  }
+
+  .algo-pill-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease;
+  }
+
+  .algo-pill-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-primary);
+  }
+
+  .algo-pill-card .yr {
+    font-size: calc(11px * var(--font-scale));
+    font-weight: 800;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+  }
+
+  .algo-pill-card .nm {
+    font-size: calc(14px * var(--font-scale));
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 2px 0;
+  }
+
+  .algo-pill-card .cx {
+    font-family: monospace;
+    font-size: calc(12px * var(--font-scale));
+    color: var(--text-secondary);
+  }
+
+  .meta-footer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .meta-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 16px;
+  }
+
+  .meta-box .lbl {
+    font-size: calc(11px * var(--font-scale));
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+  }
+
+  .meta-box .val {
+    font-size: calc(13.5px * var(--font-scale));
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* ==========================================================================
+     5. REDESIGNED GRAPH STEPPER BAR & INTERACTIVE SVG STAGE
+     ========================================================================== */
+  .sim-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Integrated Back -> Next Graph Stepper Header */
+  .graph-stepper-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--bg-slide);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 7px 12px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+    flex-shrink: 0;
+  }
+
+  .stepper-main-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-step-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    border: 1.5px solid transparent;
+  }
+
+  .btn-step-back {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+  }
+
+  .btn-step-back:hover:not(:disabled) {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+
+  .btn-step-next {
+    background: linear-gradient(135deg, #1e40af, #2563eb);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  }
+
+  .btn-step-next:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+    transform: translateY(-1px);
+  }
+
+  .btn-step-nav:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .stepper-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 10px;
+    min-width: 112px;
+  }
+
+  .stepper-count {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--accent-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stepper-sub {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .stepper-aux-btns {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ctrl-btn {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .ctrl-btn:hover {
+    background: var(--accent-primary-soft);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+
+  .ctrl-btn.primary {
+    background: #1e40af;
+    color: #ffffff;
+    border-color: #1e40af;
+  }
+
+  .ctrl-btn.primary:hover {
+    background: #1d4ed8;
+    color: #ffffff;
+  }
+
+  /* SVG Canvas Container */
+  .svg-stage {
+    flex: 1;
+    background: var(--svg-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    min-height: 255px;
+  }
+
+  .svg-stage svg {
+    width: 100%;
+    height: 100%;
+    max-height: 350px;
+  }
+
+  .flow-hud {
+    position: absolute;
+    top: 9px;
+    left: 11px;
+    right: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .hud-chip {
+    background: var(--bg-slide);
+    border: 1px solid var(--border-color);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: calc(11.5px * var(--font-scale));
+    font-weight: 700;
+    color: var(--text-primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+
+  .hud-chip.highlight {
+    background: var(--accent-emerald-soft);
+    color: var(--accent-emerald);
+    border-color: rgba(16, 185, 129, 0.35);
+    white-space: nowrap;
+  }
+
+  /* Clickable Step Pills Track Below Graph */
+  .step-pills-track {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-slide);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 5px 8px;
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+
+  .step-pill {
+    flex: 1;
+    min-width: 58px;
+    padding: 5px 6px;
+    border-radius: 7px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: calc(11px * var(--font-scale));
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+
+  .step-pill:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+
+  .step-pill.active {
+    background: var(--accent-primary);
+    color: #ffffff;
+    border-color: var(--accent-primary);
+    box-shadow: 0 2px 6px rgba(30, 64, 175, 0.25);
+  }
+
+  .step-pill.visited:not(.active) {
+    background: var(--accent-primary-soft);
+    color: var(--accent-primary);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  /* Animated SVG Flow Strokes */
+  @keyframes flowDash {
+    to {
+      stroke-dashoffset: -24;
+    }
+  }
+
+  @keyframes reverseDash {
+    to {
+      stroke-dashoffset: 24;
+    }
+  }
+
+  .edge-active-forward {
+    stroke: #2563eb !important;
+    stroke-width: 4.5 !important;
+    stroke-dasharray: 8 4;
+    animation: flowDash 0.65s linear infinite;
+  }
+
+  .edge-active-reverse {
+    stroke: #d97706 !important;
+    stroke-width: 4.5 !important;
+    stroke-dasharray: 6 4;
+    animation: reverseDash 0.65s linear infinite;
+  }
+
+  .edge-saturated {
+    stroke: #059669 !important;
+    stroke-width: 3.5 !important;
+  }
+
+  .edge-faded {
+    opacity: 0.2;
+  }
+
+  /* Step Log List */
+  .step-log {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+
+  .log-item {
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-slide);
+    font-size: calc(11.8px * var(--font-scale));
+    line-height: 1.4;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .log-item:hover {
+    border-color: var(--accent-primary);
+  }
+
+  .log-item.active {
+    background: var(--accent-primary-soft);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .log-item.reverse-note.active {
+    background: var(--accent-amber-soft);
+    border-color: var(--accent-amber);
+  }
+
+  .log-item.done-note.active {
+    background: var(--accent-emerald-soft);
+    border-color: var(--accent-emerald);
+  }
+
+  /* ==========================================================================
+     6. TABLES, CHARTS & REFERENCES
+     ========================================================================== */
+  .comp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: calc(12.2px * var(--font-scale));
+  }
+
+  .comp-table th {
+    background: var(--accent-primary-soft);
+    color: var(--accent-primary);
+    text-align: left;
+    padding: 9px 11px;
+    font-weight: 800;
+    border-bottom: 2px solid var(--accent-primary);
+  }
+
+  .comp-table td {
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    vertical-align: top;
+  }
+
+  .comp-table tr:hover td {
+    background: var(--bg-card-hover);
+  }
+
+  .mono-badge {
+    font-family: monospace;
+    font-weight: 700;
+    background: var(--bg-slide);
+    border: 1px solid var(--border-color);
+    padding: 2px 6px;
+    border-radius: 5px;
+    color: var(--text-primary);
+    font-size: calc(11.2px * var(--font-scale));
+  }
+
+  /* Bar Chart for Complexity Scaling */
+  .bar-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .bar-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: calc(11.8px * var(--font-scale));
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .bar-track {
+    height: 12px;
+    background: var(--bg-slide);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Scenario Selector Pills */
+  .scenario-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .scen-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-slide);
+    color: var(--text-secondary);
+    font-size: calc(12px * var(--font-scale));
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .scen-btn.active {
+    background: var(--accent-primary);
+    color: #ffffff;
+    border-color: var(--accent-primary);
+  }
+
+  /* References List */
+  .ref-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 18px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .ref-item {
+    font-size: calc(11.5px * var(--font-scale));
+    line-height: 1.45;
+    color: var(--text-secondary);
+    padding-left: 22px;
+    text-indent: -22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    padding-right: 10px;
+  }
+
+  .ref-item a {
+    color: var(--accent-primary);
+    text-decoration: none;
+    word-break: break-all;
+  }
+
+  .ref-item a:hover {
+    text-decoration: underline;
+  }
+
+  /* Slide Overview Drawer / Modal */
+  .overview-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.78);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .overview-modal.open {
+    display: flex;
+  }
+
+  .overview-box {
+    background: var(--bg-slide);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    max-width: 980px;
+    width: 100%;
+    padding: 22px;
+    box-shadow: var(--shadow-slide);
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .thumb-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+  }
+
+  .thumb-card:hover, .thumb-card.active {
+    border-color: var(--accent-primary);
+    background: var(--accent-primary-soft);
+  }
+
+  .thumb-num {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--accent-primary);
+  }
+
+  .thumb-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 3px;
+  }
+
+  @media (max-width: 960px) {
+    .bento-grid-2, .bento-grid-equal, .ref-grid {
+      grid-template-columns: 1fr;
+    }
+    .algo-pills-row, .meta-footer-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .overview-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==========================================================================
+     TOP PRESENTER NAVIGATION BAR
+     ========================================================================== -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="course-pill">COMPUTER ALGORITHMS • Fall 2026–2027</span>
+    <span style="opacity:0.9;">Maximum Network Flow Algorithms</span>
+  </div>
+  <div class="topbar-controls">
+    <div class="font-ctrl-group" title="Adjust Presentation Font Size (+ / - keys)">
+      <button class="font-ctrl-btn" id="btnFontDown" title="Decrease Font Size (-)">A−</button>
+      <span class="font-scale-readout" id="fontScaleReadout" title="Click to Reset Font Size (100%)">100%</span>
+      <button class="font-ctrl-btn" id="btnFontUp" title="Increase Font Size (+)">A+</button>
+    </div>
+    <button class="nav-btn" id="btnOverview" title="Slide Overview Grid (G)">⊞ Slides</button>
+    <button class="nav-btn" id="btnPrev" title="Previous Slide (PageUp / Up Arrow)">▲ Prev Slide</button>
+    <span class="slide-counter" id="slideCounter">Slide 1 / 10</span>
+    <button class="nav-btn" id="btnNext" title="Next Slide (PageDown / Down Arrow)">Next Slide ▼</button>
+    <button class="nav-btn" id="btnTheme" title="Toggle Light/Dark Theme">🌓 Theme</button>
+    <button class="nav-btn" id="btnFullscreen" title="Toggle Fullscreen (F)">⛶ Fullscreen</button>
+  </div>
+</header>
+<div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- ==========================================================================
+     MAIN PRESENTATION STAGE (10 SLIDES)
+     ========================================================================== -->
+<main class="stage">
+  <div class="slide-deck" id="slideDeck">
+
+    <!-- ========================================================================
+         SLIDE 1: TITLE SLIDE
+         ======================================================================== -->
+    <section class="slide active" data-title="Title & Overview">
+      <div class="title-slide-wrap">
+        <div class="hero-banner">
+          <div class="hero-kicker">COMPUTER ALGORITHMS | SEMESTER 2026–2027 FALL</div>
+          <h1 class="hero-title">Maximum Network Flow Algorithms:<br>A Visual &amp; Theoretical Comparative Study</h1>
+          <p class="hero-sub">
+            From Augmenting Paths to Almost-Linear Optimization: Comparative Mechanics, Asymptotic Complexity Proofs, and Interactive Back → Next Step Simulations of <strong>Ford–Fulkerson (1956)</strong>, <strong>Dinic / Dinitz (1970)</strong>, <strong>Edmonds–Karp (1972)</strong>, and <strong>Push–Relabel (1986)</strong> on the Canonical 6-Node Benchmark Network (|f*| = 19).
+          </p>
+        </div>
+
+        <div class="algo-pills-row">
+          <div class="algo-pill-card" onclick="goToSlide(2)">
+            <div class="yr">1956 • Augmenting Paths</div>
+            <div class="nm">Ford–Fulkerson</div>
+            <div class="cx">Worst-Case: O(E · |f*|)</div>
+          </div>
+          <div class="algo-pill-card" onclick="goToSlide(3)">
+            <div class="yr">1972 • Shortest Paths (BFS)</div>
+            <div class="nm">Edmonds–Karp</div>
+            <div class="cx">Worst-Case: O(V · E²)</div>
+          </div>
+          <div class="algo-pill-card" onclick="goToSlide(4)">
+            <div class="yr">1970 • Level Blocking Flows</div>
+            <div class="nm">Dinic / Dinitz</div>
+            <div class="cx">Worst-Case: O(V² · E)</div>
+          </div>
+          <div class="algo-pill-card" onclick="goToSlide(5)">
+            <div class="yr">1986 • Preflow &amp; Heights</div>
+            <div class="nm">Push–Relabel</div>
+            <div class="cx">O(V³) FIFO / O(V²√E) HL</div>
+          </div>
+        </div>
+
+        <div class="meta-footer-grid">
+          <div class="meta-box">
+            <div class="lbl">Prepared By (Authors)</div>
+            <div class="val">Abdelruhman Abu-Hamdeh, Waleed Al-Fakiat</div>
+          </div>
+          <div class="meta-box">
+            <div class="lbl">Academic Supervisor</div>
+            <div class="val">Dr. Azzam Sleit, Prof.</div>
+          </div>
+          <div class="meta-box">
+            <div class="lbl">Course &amp; Academic Term</div>
+            <div class="val">COMPUTER ALGORITHMS • Semester 2026–2027 Fall</div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Navigation: Use <strong>← / → Arrow Keys</strong> to step through graph states (Back → Next) on algorithm slides, or <strong>↑ / ↓</strong> to switch slides.</span>
+        <span>Slide 1 of 10</span>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SLIDE 2: BENCHMARK NETWORK & MAX-FLOW MIN-CUT DUALITY
+         ======================================================================== -->
+    <section class="slide" data-title="Benchmark Network & Max-Flow Min-Cut">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">Foundational Duality &amp; Benchmark Setup</div>
+          <h2 class="slide-title">Six-Node Benchmark Network &amp; Max-Flow Min-Cut Duality</h2>
+          <p class="slide-subtitle">Unified capacitated directed network (|V| = 6, |E| = 9, Optimal Flow |f*| = 19) used across all four simulators</p>
+        </div>
+        <button class="ctrl-btn primary" id="btnToggleCut">✂ Reveal Minimum Cut ({S, B} | {A, C, D, T})</button>
+      </div>
+
+      <div class="bento-grid-2">
+        <div class="bento-card">
+          <h3>
+            <span>Canonical 6-Vertex, 9-Arc Directed Network</span>
+            <span class="mono-badge" id="cutStatusBadge">Optimal |f*| = 19</span>
+          </h3>
+          <div class="svg-stage" id="svgStageSlide2"></div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div class="bento-card">
+            <h3>1. Capacity &amp; Flow Conservation Invariants</h3>
+            <p>For a directed network G = (V, E) with source S and sink T:</p>
+            <div class="formula-box">0 ≤ f(u, v) ≤ c(u, v)   ∀ (u, v) ∈ E</div>
+            <div class="formula-box">∑ f(u, v) = ∑ f(v, w)   ∀ v ∈ V \ {S, T}</div>
+          </div>
+
+          <div class="bento-card">
+            <h3>2. Residual Capacity &amp; Reverse Flow</h3>
+            <p>Residual network G_f tracks spare forward room and backward cancellation capacity:</p>
+            <div class="formula-box">c_f(u, v) = c(u, v) − f(u, v) + f(v, u)</div>
+          </div>
+
+          <div class="bento-card" style="flex:1;">
+            <h3>3. Max-Flow Min-Cut Theorem (Ford &amp; Fulkerson, 1956)</h3>
+            <p>The maximum s–t flow value equals the minimum capacity over all disconnecting cuts (X, V \ X):</p>
+            <div class="formula-box">max |f| = min c(X, V \ X) = c(S,A) + c(B,D) = 10 + 9 = 19</div>
+            <p style="margin-top:4px;">Note: Edge <strong>A → B</strong> (cap 2) crosses backward from {A,C,D,T} into {S,B}, so it contributes 0 to the forward cut capacity.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Abdelruhman Abu-Hamdeh, Waleed Al-Fakiat • Supervisor: Dr. Azzam Sleit, Prof.</span>
+        <span>Slide 2 of 10</span>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SLIDE 3: FORD-FULKERSON INTERACTIVE SIMULATOR
+         ======================================================================== -->
+    <section class="slide" data-title="Ford–Fulkerson (1956) Simulator">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">Algorithm 1 of 4 • Ford &amp; Fulkerson (1956)</div>
+          <h2 class="slide-title">Ford–Fulkerson Method: DFS Augmenting Paths &amp; Cancellation</h2>
+          <p class="slide-subtitle">Use Back ← and Next → on the graph to step through all 6 DFS routes and backward cancellations</p>
+        </div>
+        <span class="badge-pill">Complexity: O(E · |f*|) Pseudo-Polynomial</span>
+      </div>
+
+      <div class="bento-grid-2">
+        <div class="bento-card">
+          <div class="sim-panel">
+            <!-- Prominent Back -> Next Graph Stepper Bar -->
+            <div class="graph-stepper-bar">
+              <div class="stepper-main-nav">
+                <button class="btn-step-nav btn-step-back" id="ffPrevBtn">← Back</button>
+                <div class="stepper-indicator">
+                  <span class="stepper-count" id="ffStepCount">Step 1 of 7</span>
+                  <span class="stepper-sub" id="ffStepShort">Initial State</span>
+                </div>
+                <button class="btn-step-nav btn-step-next" id="ffNextBtn">Next →</button>
+              </div>
+              <div class="stepper-aux-btns">
+                <button class="ctrl-btn" id="ffResetBtn" title="Reset to Step 1">↺ Reset</button>
+                <button class="ctrl-btn primary" id="ffPlayBtn" title="Auto-advance steps">▶ Auto</button>
+              </div>
+            </div>
+
+            <div class="svg-stage" id="svgStageFF">
+              <div class="flow-hud">
+                <span class="hud-chip" id="ffStepLabel">Step 0 / 6: Initial Zero Flow</span>
+                <span class="hud-chip highlight" id="ffFlowLabel">Total Flow: 0 / 19</span>
+              </div>
+            </div>
+
+            <!-- Clickable Step Pills Bar -->
+            <div class="step-pills-track" id="ffDots"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; min-height:0;">
+          <div class="bento-card" style="flex:1; min-height:0;">
+            <h3>Execution Trace (Click any step or use Back → Next)</h3>
+            <div class="step-log" id="ffLog"></div>
+          </div>
+          <div class="bento-card">
+            <h3>Complexity Analysis: O(E · |f*|)</h3>
+            <ul>
+              <li><strong>Per-Push Cost:</strong> O(V + E) = O(E) using DFS in residual graph G_f.</li>
+              <li><strong>Iteration Bound:</strong> Integer capacities ensure Δ ≥ 1 per push ⇒ at most |f*| steps (6 routes here, with 2 reverse-edge cancellations).</li>
+              <li><strong>Vulnerability:</strong> Adversarial paths take Θ(|f*|) steps on large integers or fail to terminate on irrational capacities.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Amber dashed arrows indicate backward flow cancellation along reverse residual edges.</span>
+        <span>Slide 3 of 10</span>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SLIDE 4: EDMONDS-KARP INTERACTIVE SIMULATOR
+         ======================================================================== -->
+    <section class="slide" data-title="Edmonds–Karp (1972) Simulator">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">Algorithm 2 of 4 • Edmonds &amp; Karp (1972)</div>
+          <h2 class="slide-title">Edmonds–Karp Algorithm: Shortest Augmenting Paths via BFS</h2>
+          <p class="slide-subtitle">Step Back ← and Next → to watch shortest-hop BFS routes augment flow without reverse cancellations</p>
+        </div>
+        <span class="badge-pill">Complexity: O(V · E²) Strongly Polynomial</span>
+      </div>
+
+      <div class="bento-grid-2">
+        <div class="bento-card">
+          <div class="sim-panel">
+            <!-- Prominent Back -> Next Graph Stepper Bar -->
+            <div class="graph-stepper-bar">
+              <div class="stepper-main-nav">
+                <button class="btn-step-nav btn-step-back" id="ekPrevBtn">← Back</button>
+                <div class="stepper-indicator">
+                  <span class="stepper-count" id="ekStepCount">Step 1 of 6</span>
+                  <span class="stepper-sub" id="ekStepShort">Initial State</span>
+                </div>
+                <button class="btn-step-nav btn-step-next" id="ekNextBtn">Next →</button>
+              </div>
+              <div class="stepper-aux-btns">
+                <button class="ctrl-btn" id="ekResetBtn" title="Reset to Step 1">↺ Reset</button>
+                <button class="ctrl-btn primary" id="ekPlayBtn" title="Auto-advance steps">▶ Auto</button>
+              </div>
+            </div>
+
+            <div class="svg-stage" id="svgStageEK">
+              <div class="flow-hud">
+                <span class="hud-chip" id="ekStepLabel">Step 0 / 5: Initial Network</span>
+                <span class="hud-chip highlight" id="ekFlowLabel">Total Flow: 0 / 19</span>
+              </div>
+            </div>
+
+            <!-- Clickable Step Pills Bar -->
+            <div class="step-pills-track" id="ekDots"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; min-height:0;">
+          <div class="bento-card" style="flex:1; min-height:0;">
+            <h3>Shortest-First BFS Trace (4 Routes, 5 BFS Runs)</h3>
+            <div class="step-log" id="ekLog"></div>
+          </div>
+          <div class="bento-card">
+            <h3>Strongly Polynomial Proof Outline: O(V · E²)</h3>
+            <ul>
+              <li><strong>Distance Monotonicity:</strong> Residual distances δ(S, v) never decrease across BFS augmentations.</li>
+              <li><strong>Critical Edge Bound:</strong> Between consecutive saturations of edge (u, v), reverse edge (v, u) must be used, increasing δ(S, T) by ≥ 2 ⇒ at most V/2 saturations per edge.</li>
+              <li><strong>Total Time:</strong> O(V · E) augmentations × O(E) per BFS = <strong>O(V · E²)</strong>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Notice that all 3-hop paths (Aug 1–3) execute before the 4-hop path S→B→D→C→T (Aug 4), avoiding A→B entirely.</span>
+        <span>Slide 4 of 10</span>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SLIDE 5: DINIC / DINITZ INTERACTIVE SIMULATOR
+         ======================================================================== -->
+    <section class="slide" data-title="Dinic / Dinitz (1970) Simulator">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">Algorithm 3 of 4 • E. A. Dinic (1970)</div>
+          <h2 class="slide-title">Dinic's Algorithm: Layered Level Graphs &amp; Blocking Flows</h2>
+          <p class="slide-subtitle">Use Back ← and Next → to observe BFS level layers (L0–L4) and phase-by-phase blocking flows</p>
+        </div>
+        <span class="badge-pill">Complexity: O(V² · E) Phased Blocking Flow</span>
+      </div>
+
+      <div class="bento-grid-2">
+        <div class="bento-card">
+          <div class="sim-panel">
+            <!-- Prominent Back -> Next Graph Stepper Bar -->
+            <div class="graph-stepper-bar">
+              <div class="stepper-main-nav">
+                <button class="btn-step-nav btn-step-back" id="dinicPrevBtn">← Back</button>
+                <div class="stepper-indicator">
+                  <span class="stepper-count" id="dinicStepCount">Step 1 of 8</span>
+                  <span class="stepper-sub" id="dinicStepShort">Initial State</span>
+                </div>
+                <button class="btn-step-nav btn-step-next" id="dinicNextBtn">Next →</button>
+              </div>
+              <div class="stepper-aux-btns">
+                <button class="ctrl-btn" id="dinicResetBtn" title="Reset to Step 1">↺ Reset</button>
+                <button class="ctrl-btn primary" id="dinicPlayBtn" title="Auto-advance steps">▶ Auto</button>
+              </div>
+            </div>
+
+            <div class="svg-stage" id="svgStageDinic">
+              <div class="flow-hud">
+                <span class="hud-chip" id="dinicStepLabel">Step 0 / 7: Initial Network</span>
+                <span class="hud-chip highlight" id="dinicFlowLabel">Total Flow: 0 / 19</span>
+              </div>
+            </div>
+
+            <!-- Clickable Step Pills Bar -->
+            <div class="step-pills-track" id="dinicDots"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; min-height:0;">
+          <div class="bento-card" style="flex:1; min-height:0;">
+            <h3>Level-Graph &amp; Blocking Flow Trace (2 Phases, 3 BFS)</h3>
+            <div class="step-log" id="dinicLog"></div>
+          </div>
+          <div class="bento-card">
+            <h3>Complexity Analysis: O(V² · E)</h3>
+            <ul>
+              <li><strong>Level Graph L_G:</strong> Keeps only forward edges where level(v) = level(u) + 1 (faded edges are excluded).</li>
+              <li><strong>At Most V − 1 Phases:</strong> Each blocking flow strictly increases sink level δ(S, T) (Level 3 → Level 4 → ∞).</li>
+              <li><strong>Blocking Flow Cost:</strong> Dead-end pruning finds all paths in a phase in O(V · E) ⇒ <strong>O(V² · E)</strong> total.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Level badges (L0–L4) above vertices show exact BFS hop distance from source S in each phase.</span>
+        <span>Slide 5 of 10</span>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SLIDE 6: PUSH-RELABEL INTERACTIVE SIMULATOR
+         ======================================================================== -->
+    <section class="slide" data-title="Push–Relabel (1986/1988) Simulator">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">Algorithm 4 of 4 • Goldberg &amp; Tarjan (1986, 1988)</div>
+          <h2 class="slide-title">Push–Relabel (Preflow-Push): Heights &amp; Excess Flow</h2>
+          <p class="slide-subtitle">Use Back ← and Next → to track node heights h(v), excess water e(v), and excess return to S</p>
+        </div>
+        <span class="badge-pill">O(V²·E) Generic • O(V³) FIFO • O(V²√E) HL</span>
+      </div>
+
+      <div class="bento-grid-2">
+        <div class="bento-card">
+          <div class="sim-panel">
+            <!-- Prominent Back -> Next Graph Stepper Bar -->
+            <div class="graph-stepper-bar">
+              <div class="stepper-main-nav">
+                <button class="btn-step-nav btn-step-back" id="prPrevBtn">← Back</button>
+                <div class="stepper-indicator">
+                  <span class="stepper-count" id="prStepCount">Step 1 of 5</span>
+                  <span class="stepper-sub" id="prStepShort">Init Lift S</span>
+                </div>
+                <button class="btn-step-nav btn-step-next" id="prNextBtn">Next →</button>
+              </div>
+              <div class="stepper-aux-btns">
+                <button class="ctrl-btn" id="prResetBtn" title="Reset to Step 1">↺ Reset</button>
+                <button class="ctrl-btn primary" id="prPlayBtn" title="Auto-advance steps">▶ Auto</button>
+              </div>
+            </div>
+
+            <div class="svg-stage" id="svgStagePR">
+              <div class="flow-hud">
+                <span class="hud-chip" id="prStepLabel">Step 0 / 4: Init Lift S (h=6)</span>
+                <span class="hud-chip highlight" id="prFlowLabel">Sink T Flow: 0 / 19</span>
+              </div>
+            </div>
+
+            <!-- Clickable Step Pills Bar -->
+            <div class="step-pills-track" id="prDots"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px; min-height:0;">
+          <div class="bento-card" style="flex:1; min-height:0;">
+            <h3>Preflow-Push Milestone Trace (12 Pushes, 8 Relabels)</h3>
+            <div class="step-log" id="prLog"></div>
+          </div>
+          <div class="bento-card">
+            <h3>Local Invariants &amp; Excess Return Mechanics</h3>
+            <ul>
+              <li><strong>Initialization:</strong> Set h(S) = |V| = 6 and saturate S→A (10) &amp; S→B (10), creating initial excess e(A)=10, e(B)=10.</li>
+              <li><strong>Push(u, v):</strong> Requires e(u) &gt; 0, c_f(u,v) &gt; 0, and exact one-step drop h(u) = h(v) + 1.</li>
+              <li><strong>Excess Return:</strong> Trapped 1 unit at B lifts B to h(B) = 7 &gt; h(S) = 6 and pushes 1 unit back to S.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Node badges display live height h(v) and excess water e(v); execution finishes when e(v) = 0 for all intermediate nodes.</span>
+        <span>Slide 6 of 10</span>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SLIDE 7: UNIFIED COMPLEXITY & BENCHMARK COMPARISON MATRIX
+         ======================================================================== -->
+    <section class="slide" data-title="Unified Complexity & Benchmark Matrix">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">Theoretical &amp; Empirical Synthesis</div>
+          <h2 class="slide-title">Asymptotic Complexity &amp; Benchmark Comparison Matrix</h2>
+          <p class="slide-subtitle">Comparing worst-case bounds, dense-graph scaling (E ≈ V²), and 6-node benchmark operation counts</p>
+        </div>
+        <span class="badge-pill">1956 – 2026 Progression</span>
+      </div>
+
+      <div class="bento-grid-2">
+        <div class="bento-card" style="overflow-x:auto;">
+          <h3>Master Algorithmic Comparison Table</h3>
+          <table class="comp-table">
+            <thead>
+              <tr>
+                <th>Algorithm</th>
+                <th>Year</th>
+                <th>Worst-Case</th>
+                <th>Dense (E≈V²)</th>
+                <th>6-Node Trace</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Ford–Fulkerson</strong><br><span style="font-size:11px;">Any route (DFS)</span></td>
+                <td>1956</td>
+                <td><span class="mono-badge">O(E · |f*|)</span></td>
+                <td><span class="mono-badge">O(V² · |f*|)</span></td>
+                <td>6 routes (2 reverse cancellations)</td>
+              </tr>
+              <tr>
+                <td><strong>Dinic / Dinitz</strong><br><span style="font-size:11px;">Level graphs + blocking</span></td>
+                <td>1970</td>
+                <td><span class="mono-badge">O(V² · E)</span></td>
+                <td><span class="mono-badge">O(V⁴)</span></td>
+                <td>4 routes in 2 phases (3 BFS)</td>
+              </tr>
+              <tr>
+                <td><strong>Edmonds–Karp</strong><br><span style="font-size:11px;">Shortest route (BFS)</span></td>
+                <td>1972</td>
+                <td><span class="mono-badge">O(V · E²)</span></td>
+                <td><span class="mono-badge">O(V⁵)</span></td>
+                <td>4 shortest routes (5 BFS runs)</td>
+              </tr>
+              <tr>
+                <td><strong>Push–Relabel</strong><br><span style="font-size:11px;">Heights &amp; excess preflow</span></td>
+                <td>1986</td>
+                <td><span class="mono-badge">O(V³)</span> FIFO<br><span class="mono-badge">O(V²√E)</span> HL</td>
+                <td><span class="mono-badge">O(V³)</span><br><span class="mono-badge">O(V³)</span></td>
+                <td>12 pushes + 8 relabels (0 paths)</td>
+              </tr>
+              <tr>
+                <td><strong>Li &amp; Wice</strong><br><span style="font-size:11px;">IPM-free almost-linear</span></td>
+                <td>2026</td>
+                <td><span class="mono-badge">E^{1+o(1)}</span></td>
+                <td><span class="mono-badge">V^{2+o(1)}</span></td>
+                <td>Direct combinatorial near-linear</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="bento-card">
+          <h3>
+            <span>Dense-Graph Growth Comparison (E = V²)</span>
+            <select id="vertexScaleSelect" class="ctrl-btn" style="padding:3px 8px;">
+              <option value="20">V = 20 Nodes</option>
+              <option value="50" selected>V = 50 Nodes</option>
+              <option value="100">V = 100 Nodes</option>
+            </select>
+          </h3>
+          <p style="margin-bottom:12px;">Relative asymptotic operation count on dense graphs (log-scaled visual bars):</p>
+          <div id="complexityBarsContainer"></div>
+          <div class="formula-box" style="margin-top:auto;">
+            Key Takeaway: On dense graphs, Push–Relabel (O(V³)) reduces operations by two orders of magnitude vs. Edmonds–Karp (O(V⁵)).
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Note: Different algorithms count distinct primitive units (paths vs. phases vs. local pushes).</span>
+        <span>Slide 7 of 10</span>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SLIDE 8: ALGORITHMIC EVOLUTION & ENGINEERING SELECTION GUIDE
+         ======================================================================== -->
+    <section class="slide" data-title="Evolution & Engineering Selection Guide">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">Algorithmic Design &amp; Practical Engineering</div>
+          <h2 class="slide-title">How Each Paradigm Improves &amp; Practical Selection Guide</h2>
+          <p class="slide-subtitle">Three conceptual leaps from 1956 to 1988 and interactive workload recommendations</p>
+        </div>
+        <span class="badge-pill">Systems Engineering</span>
+      </div>
+
+      <div class="bento-grid-equal">
+        <div class="bento-card">
+          <h3>Three Conceptual Breakthroughs</h3>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+            <div class="formula-box" style="border-left-color:#2563eb;">
+              <strong>1. Ford–Fulkerson → Edmonds–Karp:</strong><br>
+              <span style="font-weight:400; font-family:inherit; color:var(--text-secondary);">Fixing path selection to "shortest hop count" bounds pushes at O(V·E) regardless of capacity values: <strong>O(E·|f*|) → O(V·E²)</strong>.</span>
+            </div>
+            <div class="formula-box" style="border-left-color:#059669;">
+              <strong>2. Edmonds–Karp → Dinic:</strong><br>
+              <span style="font-weight:400; font-family:inherit; color:var(--text-secondary);">Batching all routes of equal length into one BFS level graph amortizes path search across a blocking flow: <strong>O(V·E²) → O(V²·E)</strong>.</span>
+            </div>
+            <div class="formula-box" style="border-left-color:#7c3aed;">
+              <strong>3. Dinic → Push–Relabel:</strong><br>
+              <span style="font-weight:400; font-family:inherit; color:var(--text-secondary);">Replacing global routes with local excess discharge and height labels eliminates level-graph rebuilds: <strong>O(V²·E) → O(V³)</strong>.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bento-card">
+          <h3>Interactive Algorithm Selection Advisor</h3>
+          <div class="scenario-tabs" id="scenarioTabs">
+            <button class="scen-btn active" data-scen="sparse">Sparse / Bipartite</button>
+            <button class="scen-btn" data-scen="dense">Dense Capacitated</button>
+            <button class="scen-btn" data-scen="massive">Massive / Dynamic (2026)</button>
+          </div>
+          <div id="scenarioContent" style="flex:1; display:flex; flex-direction:column; justify-content:space-between;"></div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Click the workload tabs on the right to inspect recommended production solvers and heuristics.</span>
+        <span>Slide 8 of 10</span>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SLIDE 9: RECENT ADVANCES IN MAXIMUM FLOW (2026)
+         ======================================================================== -->
+    <section class="slide" data-title="2026 State-of-the-Art Advances">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">Contemporary Research Frontiers (2026)</div>
+          <h2 class="slide-title">Recent Breakthroughs in Maximum Flow (2026)</h2>
+          <p class="slide-subtitle">Eliminating continuous interior-point methods in almost-linear time and solving dynamic time-varying flows</p>
+        </div>
+        <span class="badge-pill">2026 Literature</span>
+      </div>
+
+      <div class="bento-grid-equal">
+        <div class="bento-card">
+          <h3>
+            <span>1. Almost-Linear Max-Flow Without Outer IPM</span>
+            <span class="mono-badge">Li &amp; Wice (2026)</span>
+          </h3>
+          <p style="margin-bottom:8px;"><strong>Source:</strong> <em>Maximum Flow Without the Outer IPM</em> (arXiv:2608.17384)</p>
+          <ul>
+            <li><strong>Context (2022–2025):</strong> Prior E^{1+o(1)} algorithms wrapped graph data structures inside an outer continuous Interior-Point Method (IPM), requiring barrier potentials and Hessian tracking.</li>
+            <li><strong>2026 Breakthrough:</strong> Li and Wice achieve exact <strong>E^{1+o(1)} almost-linear time</strong> directly through iterative multiplicative-weight updates and dynamic approximate shortest-path / cycle-canceling maintenance.</li>
+            <li><strong>Significance:</strong> Bridges the theoretical gap between continuous E^{1+o(1)} complexity and transparent combinatorial flow algorithms.</li>
+          </ul>
+          <div class="formula-box" style="margin-top:auto;">
+            Runtime: m^{1+o(1)} (Purely Combinatorial / No Outer IPM)
+          </div>
+        </div>
+
+        <div class="bento-card">
+          <h3>
+            <span>2. Dynamic Maximum Flow Over Time</span>
+            <span class="mono-badge">Chawla &amp; Sheridan (2026)</span>
+          </h3>
+          <p style="margin-bottom:8px;"><strong>Source:</strong> <em>A Special Case of Maximum Flow Over Time with Network Changes</em> (SAND 2026)</p>
+          <ul>
+            <li><strong>Problem Setting:</strong> Extends Ford &amp; Fulkerson's (1962) Maximum Flow Over Time (MFOT) from static transit networks to dynamic topologies where edge capacities and link availability change over horizon T.</li>
+            <li><strong>2026 Contribution:</strong> Establishes structural optimality conditions and polynomial-time update schemes without rebuilding the entire time-expanded network from scratch.</li>
+            <li><strong>Applications:</strong> Real-time packet routing, resilient logistics, and adaptive smart-grid dispatch.</li>
+          </ul>
+          <div class="formula-box" style="margin-top:auto;">
+            Generalizes Temporally Repeated Flows to Dynamic Topologies
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Synthesizing classical combinatorial duality (1951–1988) with frontier 2026 research.</span>
+        <span>Slide 9 of 10</span>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         SLIDE 10: REFERENCES (APA 7TH EDITION WITH DOIS)
+         ======================================================================== -->
+    <section class="slide" data-title="References (APA 7th Edition)">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">Academic Bibliography</div>
+          <h2 class="slide-title">References (APA 7th Edition with DOIs)</h2>
+          <p class="slide-subtitle">Foundational monographs, classical papers, and 2026 publications cited in this study</p>
+        </div>
+        <span class="badge-pill">12 Verified Sources</span>
+      </div>
+
+      <div class="ref-grid">
+        <div class="ref-item">Chawla, S., &amp; Sheridan, K. (2026). <em>Brief announcement: A special case of maximum flow over time with network changes</em>. Symposium on Algorithmic Foundations of Dynamic Networks (SAND 2026) / arXiv. <a href="https://doi.org/10.48550/arXiv.2605.00277" target="_blank" rel="noopener">https://doi.org/10.48550/arXiv.2605.00277</a></div>
+
+        <div class="ref-item">Dantzig, G. B. (1951). Maximization of a linear function of variables subject to linear inequalities. In T. C. Koopmans (Ed.), <em>Activity analysis of production and allocation</em> (Cowles Commission Monograph No. 13, Part IV, Chapter XXI, pp. 339–347). John Wiley &amp; Sons.</div>
+
+        <div class="ref-item">Dinic, E. A. (1970). Algorithm for solution of a problem of maximum flow in a network with power estimation. <em>Soviet Mathematics Doklady</em>, <em>11</em>(5), 1277–1280.</div>
+
+        <div class="ref-item">Edmonds, J., &amp; Fulkerson, D. R. (1968). <em>Bottleneck extrema</em> (RAND Corporation Memorandum RM-5375-PR). RAND Corporation. <a href="https://doi.org/10.7249/RM5375" target="_blank" rel="noopener">https://doi.org/10.7249/RM5375</a></div>
+
+        <div class="ref-item">Edmonds, J., &amp; Karp, R. M. (1972). Theoretical improvements in algorithmic efficiency for network flow problems. <em>Journal of the Association for Computing Machinery (JACM)</em>, <em>19</em>(2), 248–264. <a href="https://doi.org/10.1145/321694.321699" target="_blank" rel="noopener">https://doi.org/10.1145/321694.321699</a></div>
+
+        <div class="ref-item">Ford, L. R., Jr., &amp; Fulkerson, D. R. (1956). Maximal flow through a network. <em>Canadian Journal of Mathematics</em>, <em>8</em>, 399–404. <a href="https://doi.org/10.4153/CJM-1956-045-5" target="_blank" rel="noopener">https://doi.org/10.4153/CJM-1956-045-5</a></div>
+
+        <div class="ref-item">Ford, L. R., Jr., &amp; Fulkerson, D. R. (1962). <em>Flows in networks</em>. Princeton University Press. <a href="https://doi.org/10.1515/9781400875184" target="_blank" rel="noopener">https://doi.org/10.1515/9781400875184</a></div>
+
+        <div class="ref-item">Goldberg, A. V., &amp; Tarjan, R. E. (1986). A new approach to the maximum flow problem. <em>Proceedings of the Eighteenth Annual ACM Symposium on Theory of Computing (STOC '86)</em>, 136–146. <a href="https://doi.org/10.1145/12130.12144" target="_blank" rel="noopener">https://doi.org/10.1145/12130.12144</a></div>
+
+        <div class="ref-item">Goldberg, A. V., &amp; Tarjan, R. E. (1988). A new approach to the maximum-flow problem. <em>Journal of the Association for Computing Machinery (JACM)</em>, <em>35</em>(4), 921–940. <a href="https://doi.org/10.1145/48014.61051" target="_blank" rel="noopener">https://doi.org/10.1145/48014.61051</a></div>
+
+        <div class="ref-item">Li, J., &amp; Wice, A. (2026). <em>Maximum flow without the outer IPM</em>. arXiv. <a href="https://doi.org/10.48550/arXiv.2608.17384" target="_blank" rel="noopener">https://doi.org/10.48550/arXiv.2608.17384</a></div>
+
+        <div class="ref-item">Whitney, H. (1932). Non-separable and planar graphs. <em>Transactions of the American Mathematical Society</em>, <em>34</em>(2), 339–362. <a href="https://doi.org/10.1090/S0002-9947-1932-1501641-2" target="_blank" rel="noopener">https://doi.org/10.1090/S0002-9947-1932-1501641-2</a></div>
+
+        <div class="ref-item">Whitney, H. (1933). Planar graphs. <em>Fundamenta Mathematicae</em>, <em>21</em>(1), 73–84. <a href="https://doi.org/10.4064/fm-21-1-73-84" target="_blank" rel="noopener">https://doi.org/10.4064/fm-21-1-73-84</a></div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Abdelruhman Abu-Hamdeh, Waleed Al-Fakiat • Supervisor: Dr. Azzam Sleit, Prof. • COMPUTER ALGORITHMS (Fall 2026–2027)</span>
+        <span>Slide 10 of 10</span>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ==========================================================================
+     SLIDE OVERVIEW MODAL
+     ========================================================================== -->
+<div class="overview-modal" id="overviewModal">
+  <div class="overview-box">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="font-size:16px; font-weight:800;">Presentation Slide Navigator (Click to Jump)</h3>
+      <button class="ctrl-btn" id="btnCloseOverview">✕ Close</button>
+    </div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     JAVASCRIPT ENGINE: SLIDE NAVIGATION + BACK->NEXT GRAPH SIMULATORS
+     ========================================================================== -->
+<script>
+(function () {
+  /* --------------------------------------------------------------------------
+     A. SLIDE NAVIGATION & THEME MANAGEMENT
+     -------------------------------------------------------------------------- */
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  const activeSimulators = {}; // Maps slide index -> simulator controller
+
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const slideCounter = document.getElementById('slideCounter');
+  const progressFill = document.getElementById('progressFill');
+  const overviewModal = document.getElementById('overviewModal');
+  const overviewGrid = document.getElementById('overviewGrid');
+
+  // Build Overview Grid
+  slides.forEach((sl, idx) => {
+    const card = document.createElement('button');
+    card.className = 'thumb-card' + (idx === 0 ? ' active' : '');
+    card.innerHTML = `<div class="thumb-num">SLIDE ${idx + 1}</div><div class="thumb-title">${sl.dataset.title}</div>`;
+    card.addEventListener('click', () => {
+      goToSlide(idx);
+      overviewModal.classList.remove('open');
+    });
+    overviewGrid.appendChild(card);
+  });
+
+  window.goToSlide = function (index) {
+    if (index < 0 || index >= totalSlides) return;
+    slides.forEach((s, i) => {
+      s.classList.remove('active', 'prev-out');
+      if (i < index) s.classList.add('prev-out');
+    });
+    currentSlide = index;
+    slides[currentSlide].classList.add('active');
+    slideCounter.textContent = `Slide ${currentSlide + 1} / ${totalSlides}`;
+    progressFill.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+    btnPrev.disabled = currentSlide === 0;
+    btnNext.disabled = currentSlide === totalSlides - 1;
+
+    Array.from(overviewGrid.children).forEach((c, i) => {
+      c.classList.toggle('active', i === currentSlide);
+    });
+  };
+
+  btnPrev.addEventListener('click', () => goToSlide(currentSlide - 1));
+  btnNext.addEventListener('click', () => goToSlide(currentSlide + 1));
+  document.getElementById('btnOverview').addEventListener('click', () => overviewModal.classList.add('open'));
+  document.getElementById('btnCloseOverview').addEventListener('click', () => overviewModal.classList.remove('open'));
+  overviewModal.addEventListener('click', (e) => {
+    if (e.target === overviewModal) overviewModal.classList.remove('open');
+  });
+
+  // Theme Toggle
+  document.getElementById('btnTheme').addEventListener('click', () => {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  });
+
+  // Font Size Scale Control (85% to 150%)
+  const FONT_MIN = 0.85;
+  const FONT_MAX = 1.50;
+  const FONT_STEP = 0.10;
+  let fontScale = 1.0;
+
+  const btnFontDown = document.getElementById('btnFontDown');
+  const btnFontUp = document.getElementById('btnFontUp');
+  const fontScaleReadout = document.getElementById('fontScaleReadout');
+
+  function applyFontScale(newScale) {
+    fontScale = Math.min(FONT_MAX, Math.max(FONT_MIN, Math.round(newScale * 100) / 100));
+    document.documentElement.style.setProperty('--font-scale', fontScale);
+    fontScaleReadout.textContent = `${Math.round(fontScale * 100)}%`;
+    btnFontDown.disabled = fontScale <= FONT_MIN;
+    btnFontUp.disabled = fontScale >= FONT_MAX;
+
+    // Also scale SVG edge capacity & node badge text cleanly
+    const svgFontScale = 1 + (fontScale - 1) * 0.45;
+    document.querySelectorAll('.svg-edge-label').forEach(el => {
+      el.setAttribute('font-size', (11.5 * svgFontScale).toFixed(1));
+    });
+    document.querySelectorAll('.svg-badge-label').forEach(el => {
+      el.setAttribute('font-size', (10.5 * svgFontScale).toFixed(1));
+    });
+  }
+
+  btnFontDown.addEventListener('click', () => applyFontScale(fontScale - FONT_STEP));
+  btnFontUp.addEventListener('click', () => applyFontScale(fontScale + FONT_STEP));
+  fontScaleReadout.addEventListener('click', () => applyFontScale(1.0));
+
+  // Fullscreen Toggle
+  document.getElementById('btnFullscreen').addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  });
+
+  // Keyboard Shortcuts:
+  // On algorithm slides (indices 2,3,4,5), Left/Right arrows control Graph Back -> Next!
+  // Up/Down or PageUp/PageDown always change slides.
+  document.addEventListener('keydown', (e) => {
+    const sim = activeSimulators[currentSlide];
+    if (e.key === 'ArrowRight') {
+      if (sim && sim.canNext()) sim.next();
+      else goToSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowLeft') {
+      if (sim && sim.canBack()) sim.back();
+      else goToSlide(currentSlide - 1);
+    } else if (e.key === 'PageDown' || e.key === 'ArrowDown') {
+      goToSlide(currentSlide + 1);
+    } else if (e.key === 'PageUp' || e.key === 'ArrowUp') {
+      goToSlide(currentSlide - 1);
+    } else if (e.key === 'Escape') {
+      overviewModal.classList.remove('open');
+    } else if (e.key.toLowerCase() === 'g') {
+      overviewModal.classList.toggle('open');
+    } else if (e.key === '+' || e.key === '=') {
+      applyFontScale(fontScale + FONT_STEP);
+    } else if (e.key === '-' || e.key === '_') {
+      applyFontScale(fontScale - FONT_STEP);
+    } else if (e.key === '0') {
+      applyFontScale(1.0);
+    }
+  });
+
+  /* --------------------------------------------------------------------------
+     B. SHARED 6-NODE NETWORK TOPOLOGY & SVG BUILDER
+     -------------------------------------------------------------------------- */
+  const NODES = {
+    S: { x: 85,  y: 185, color: '#1e40af', text: '#ffffff' },
+    A: { x: 245, y: 85,  color: '#0284c7', text: '#ffffff' },
+    B: { x: 245, y: 285, color: '#0284c7', text: '#ffffff' },
+    C: { x: 435, y: 85,  color: '#0284c7', text: '#ffffff' },
+    D: { x: 435, y: 285, color: '#0284c7', text: '#ffffff' },
+    T: { x: 595, y: 185, color: '#059669', text: '#ffffff' }
+  };
+
+  const EDGES = [
+    { id: 'SA', u: 'S', v: 'A', cap: 10, lx: 150, ly: 118 },
+    { id: 'SB', u: 'S', v: 'B', cap: 10, lx: 150, ly: 254 },
+    { id: 'AB', u: 'A', v: 'B', cap: 2,  lx: 222, ly: 185 },
+    { id: 'AC', u: 'A', v: 'C', cap: 4,  lx: 340, ly: 66  },
+    { id: 'AD', u: 'A', v: 'D', cap: 8,  lx: 320, ly: 162 },
+    { id: 'BD', u: 'B', v: 'D', cap: 9,  lx: 340, ly: 306 },
+    { id: 'DC', u: 'D', v: 'C', cap: 6,  lx: 462, ly: 185 },
+    { id: 'CT', u: 'C', v: 'T', cap: 10, lx: 530, ly: 118 },
+    { id: 'DT', u: 'D', v: 'T', cap: 10, lx: 530, ly: 254 }
+  ];
+
+  function createNetworkSVG(prefix, options = {}) {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 680 370');
+
+    // Arrowhead markers
+    const defs = document.createElementNS(svgNS, 'defs');
+    const markers = [
+      { id: `${prefix}-arrow-idle`, color: '#94a3b8' },
+      { id: `${prefix}-arrow-fwd`,  color: '#2563eb' },
+      { id: `${prefix}-arrow-rev`,  color: '#d97706' },
+      { id: `${prefix}-arrow-sat`,  color: '#059669' }
+    ];
+    markers.forEach(m => {
+      const marker = document.createElementNS(svgNS, 'marker');
+      marker.setAttribute('id', m.id);
+      marker.setAttribute('viewBox', '0 0 10 10');
+      marker.setAttribute('refX', '8');
+      marker.setAttribute('refY', '5');
+      marker.setAttribute('markerWidth', '6');
+      marker.setAttribute('markerHeight', '6');
+      marker.setAttribute('orient', 'auto-start-reverse');
+      const path = document.createElementNS(svgNS, 'path');
+      path.setAttribute('d', 'M 0 1.5 L 9 5 L 0 8.5 z');
+      path.setAttribute('fill', m.color);
+      marker.appendChild(path);
+      defs.appendChild(marker);
+    });
+    svg.appendChild(defs);
+
+    // Draw Edges
+    EDGES.forEach(e => {
+      const n1 = NODES[e.u];
+      const n2 = NODES[e.v];
+      const dx = n2.x - n1.x;
+      const dy = n2.y - n1.y;
+      const len = Math.hypot(dx, dy);
+      const r = 24;
+      const x1 = n1.x + (dx / len) * r;
+      const y1 = n1.y + (dy / len) * r;
+      const x2 = n2.x - (dx / len) * (r + 5);
+      const y2 = n2.y - (dy / len) * (r + 5);
+
+      const gEdge = document.createElementNS(svgNS, 'g');
+      gEdge.setAttribute('id', `${prefix}-group-${e.id}`);
+
+      const line = document.createElementNS(svgNS, 'line');
+      line.setAttribute('id', `${prefix}-line-${e.id}`);
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('stroke', '#94a3b8');
+      line.setAttribute('stroke-width', '2.8');
+      line.setAttribute('marker-end', `url(#${prefix}-arrow-idle)`);
+      gEdge.appendChild(line);
+
+      // Pill background for capacity label
+      const rect = document.createElementNS(svgNS, 'rect');
+      rect.setAttribute('x', e.lx - 22);
+      rect.setAttribute('y', e.ly - 11);
+      rect.setAttribute('width', '44');
+      rect.setAttribute('height', '20');
+      rect.setAttribute('rx', '6');
+      rect.setAttribute('fill', 'var(--svg-label-bg)');
+      rect.setAttribute('stroke', 'var(--border-color)');
+      rect.setAttribute('stroke-width', '1');
+      gEdge.appendChild(rect);
+
+      const text = document.createElementNS(svgNS, 'text');
+      text.setAttribute('id', `${prefix}-txt-${e.id}`);
+      text.setAttribute('class', 'svg-edge-label');
+      text.setAttribute('x', e.lx);
+      text.setAttribute('y', e.ly + 3);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '11.5');
+      text.setAttribute('font-weight', '700');
+      text.setAttribute('fill', 'var(--text-primary)');
+      text.textContent = `0/${e.cap}`;
+      gEdge.appendChild(text);
+
+      svg.appendChild(gEdge);
+    });
+
+    // Optional Minimum Cut Dashed Curve (for Slide 2 & final states)
+    const cutPath = document.createElementNS(svgNS, 'path');
+    cutPath.setAttribute('id', `${prefix}-mincut`);
+    cutPath.setAttribute('d', 'M 175 45 C 175 160, 290 215, 305 345');
+    cutPath.setAttribute('fill', 'none');
+    cutPath.setAttribute('stroke', '#dc2626');
+    cutPath.setAttribute('stroke-width', '3.5');
+    cutPath.setAttribute('stroke-dasharray', '8 6');
+    cutPath.setAttribute('opacity', '0');
+    cutPath.style.transition = 'opacity 0.35s ease';
+    svg.appendChild(cutPath);
+
+    const cutLabel = document.createElementNS(svgNS, 'text');
+    cutLabel.setAttribute('id', `${prefix}-mincut-lbl`);
+    cutLabel.setAttribute('x', '185');
+    cutLabel.setAttribute('y', '352');
+    cutLabel.setAttribute('fill', '#dc2626');
+    cutLabel.setAttribute('font-size', '12');
+    cutLabel.setAttribute('font-weight', '800');
+    cutLabel.setAttribute('opacity', '0');
+    cutLabel.textContent = 'Min Cut {S, B} = 10 + 9 = 19';
+    svg.appendChild(cutLabel);
+
+    // Draw Nodes
+    Object.entries(NODES).forEach(([id, n]) => {
+      const gNode = document.createElementNS(svgNS, 'g');
+
+      const circle = document.createElementNS(svgNS, 'circle');
+      circle.setAttribute('id', `${prefix}-node-${id}`);
+      circle.setAttribute('cx', n.x);
+      circle.setAttribute('cy', n.y);
+      circle.setAttribute('r', '22');
+      circle.setAttribute('fill', n.color);
+      circle.setAttribute('stroke', '#ffffff');
+      circle.setAttribute('stroke-width', '2.5');
+      gNode.appendChild(circle);
+
+      const label = document.createElementNS(svgNS, 'text');
+      label.setAttribute('x', n.x);
+      label.setAttribute('y', n.y + 5);
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('fill', n.text);
+      label.setAttribute('font-size', '15');
+      label.setAttribute('font-weight', '800');
+      label.textContent = id;
+      gNode.appendChild(label);
+
+      // Optional Badge above node (for Dinic levels & Push-Relabel h/e)
+      if (options.showBadge) {
+        const badgeBg = document.createElementNS(svgNS, 'rect');
+        badgeBg.setAttribute('id', `${prefix}-badgebg-${id}`);
+        badgeBg.setAttribute('x', n.x - 36);
+        badgeBg.setAttribute('y', n.y - 44);
+        badgeBg.setAttribute('width', '72');
+        badgeBg.setAttribute('height', '18');
+        badgeBg.setAttribute('rx', '6');
+        badgeBg.setAttribute('fill', '#0f172a');
+        badgeBg.setAttribute('opacity', '0.9');
+        gNode.appendChild(badgeBg);
+
+        const badgeTxt = document.createElementNS(svgNS, 'text');
+        badgeTxt.setAttribute('id', `${prefix}-badge-${id}`);
+        badgeTxt.setAttribute('class', 'svg-badge-label');
+        badgeTxt.setAttribute('x', n.x);
+        badgeTxt.setAttribute('y', n.y - 31);
+        badgeTxt.setAttribute('text-anchor', 'middle');
+        badgeTxt.setAttribute('fill', '#38bdf8');
+        badgeTxt.setAttribute('font-size', '10.5');
+        badgeTxt.setAttribute('font-weight', '800');
+        badgeTxt.textContent = '';
+        gNode.appendChild(badgeTxt);
+      }
+
+      svg.appendChild(gNode);
+    });
+
+    return svg;
+  }
+
+  /* --------------------------------------------------------------------------
+     C. SLIDE 2: BENCHMARK & MIN-CUT TOGGLE
+     -------------------------------------------------------------------------- */
+  const s2Container = document.getElementById('svgStageSlide2');
+  const s2Svg = createNetworkSVG('s2');
+  s2Container.appendChild(s2Svg);
+
+  const OPTIMAL_FLOWS = { SA: 10, SB: 9, AB: 0, AC: 4, AD: 6, BD: 9, DC: 5, CT: 9, DT: 10 };
+  let cutVisible = false;
+  document.getElementById('btnToggleCut').addEventListener('click', function () {
+    cutVisible = !cutVisible;
+    this.textContent = cutVisible ? '✕ Hide Minimum Cut' : '✂ Reveal Minimum Cut ({S, B} | {A, C, D, T})';
+    document.getElementById('s2-mincut').setAttribute('opacity', cutVisible ? '1' : '0');
+    document.getElementById('s2-mincut-lbl').setAttribute('opacity', cutVisible ? '1' : '0');
+
+    EDGES.forEach(e => {
+      const f = cutVisible ? OPTIMAL_FLOWS[e.id] : 0;
+      document.getElementById(`s2-txt-${e.id}`).textContent = `${f}/${e.cap}`;
+      const line = document.getElementById(`s2-line-${e.id}`);
+      if (cutVisible && f === e.cap) {
+        line.classList.add('edge-saturated');
+        line.setAttribute('marker-end', 'url(#s2-arrow-sat)');
+      } else {
+        line.classList.remove('edge-saturated');
+        line.setAttribute('marker-end', 'url(#s2-arrow-idle)');
+      }
+    });
+  });
+
+  /* --------------------------------------------------------------------------
+     D. GENERIC INTERACTIVE BACK -> NEXT SIMULATOR CONTROLLER
+     -------------------------------------------------------------------------- */
+  function initSimulator(config) {
+    const container = document.getElementById(config.stageId);
+    const hud = container.querySelector('.flow-hud');
+    const svg = createNetworkSVG(config.prefix, { showBadge: config.showBadge });
+    container.insertBefore(svg, hud);
+
+    const logEl = document.getElementById(config.logId);
+    const dotsEl = document.getElementById(config.dotsId);
+    const stepLabel = document.getElementById(config.stepLabelId);
+    const flowLabel = document.getElementById(config.flowLabelId);
+    const stepCountEl = document.getElementById(config.stepCountId);
+    const stepShortEl = document.getElementById(config.stepShortId);
+    const prevBtn = document.getElementById(config.prevBtnId);
+    const nextBtn = document.getElementById(config.nextBtnId);
+    const playBtn = document.getElementById(config.playBtnId);
+
+    let stepIdx = 0;
+    let timer = null;
+    const total = config.steps.length;
+
+    // Build log items & step pills
+    config.steps.forEach((st, idx) => {
+      const item = document.createElement('div');
+      item.className = 'log-item' + (st.type ? ` ${st.type}` : '');
+      item.innerHTML = st.logHtml;
+      item.addEventListener('click', () => {
+        stopAuto();
+        renderStep(idx);
+      });
+      logEl.appendChild(item);
+
+      const pill = document.createElement('button');
+      pill.className = 'step-pill';
+      pill.textContent = st.shortPill || `Step ${idx + 1}`;
+      pill.addEventListener('click', () => {
+        stopAuto();
+        renderStep(idx);
+      });
+      dotsEl.appendChild(pill);
+    });
+
+    function renderStep(idx) {
+      stepIdx = idx;
+      const st = config.steps[idx];
+      stepLabel.textContent = st.hudStep;
+      flowLabel.textContent = st.hudFlow;
+      stepCountEl.textContent = `Step ${idx + 1} of ${total}`;
+      stepShortEl.textContent = st.shortPill || `Stage ${idx + 1}`;
+
+      // Enable / Disable Back & Next Buttons
+      prevBtn.disabled = idx === 0;
+      nextBtn.disabled = idx === total - 1;
+      nextBtn.textContent = idx === total - 1 ? 'Done ✓' : 'Next →';
+
+      // Update Log & Step Pills
+      Array.from(logEl.children).forEach((el, i) => {
+        el.classList.toggle('active', i === idx);
+        if (i === idx) {
+          el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      });
+      Array.from(dotsEl.children).forEach((el, i) => {
+        el.classList.toggle('active', i === idx);
+        el.classList.toggle('visited', i < idx);
+      });
+
+      // Update Edges
+      EDGES.forEach(e => {
+        const val = st.flows[e.id] || 0;
+        const txt = document.getElementById(`${config.prefix}-txt-${e.id}`);
+        const line = document.getElementById(`${config.prefix}-line-${e.id}`);
+        const grp = document.getElementById(`${config.prefix}-group-${e.id}`);
+
+        txt.textContent = `${val}/${e.cap}`;
+        line.classList.remove('edge-active-forward', 'edge-active-reverse', 'edge-saturated');
+        grp.classList.remove('edge-faded');
+
+        if (st.fadedEdges && st.fadedEdges.includes(e.id)) {
+          grp.classList.add('edge-faded');
+        }
+
+        if (st.fwdEdges && st.fwdEdges.includes(e.id)) {
+          line.classList.add('edge-active-forward');
+          line.setAttribute('marker-end', `url(#${config.prefix}-arrow-fwd)`);
+        } else if (st.revEdges && st.revEdges.includes(e.id)) {
+          line.classList.add('edge-active-reverse');
+          line.setAttribute('marker-start', `url(#${config.prefix}-arrow-rev)`);
+          line.setAttribute('marker-end', `url(#${config.prefix}-arrow-idle)`);
+        } else if (val === e.cap && val > 0) {
+          line.classList.add('edge-saturated');
+          line.removeAttribute('marker-start');
+          line.setAttribute('marker-end', `url(#${config.prefix}-arrow-sat)`);
+        } else {
+          line.removeAttribute('marker-start');
+          line.setAttribute('marker-end', `url(#${config.prefix}-arrow-idle)`);
+        }
+      });
+
+      // Min cut visibility
+      const showCut = !!st.showCut;
+      document.getElementById(`${config.prefix}-mincut`).setAttribute('opacity', showCut ? '1' : '0');
+      document.getElementById(`${config.prefix}-mincut-lbl`).setAttribute('opacity', showCut ? '1' : '0');
+
+      // Optional Node Badges
+      if (config.showBadge && st.badges) {
+        Object.entries(st.badges).forEach(([nid, btxt]) => {
+          const bEl = document.getElementById(`${config.prefix}-badge-${nid}`);
+          if (bEl) bEl.textContent = btxt;
+        });
+      }
+    }
+
+    function stopAuto() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+        playBtn.textContent = '▶ Auto';
+      }
+    }
+
+    function goBack() {
+      stopAuto();
+      if (stepIdx > 0) renderStep(stepIdx - 1);
+    }
+
+    function goNext() {
+      stopAuto();
+      if (stepIdx < total - 1) renderStep(stepIdx + 1);
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (timer) {
+        stopAuto();
+      } else {
+        playBtn.textContent = '⏸ Pause';
+        if (stepIdx >= total - 1) renderStep(0);
+        timer = setInterval(() => {
+          if (stepIdx < total - 1) {
+            renderStep(stepIdx + 1);
+          } else {
+            stopAuto();
+          }
+        }, 1750);
+      }
+    });
+
+    prevBtn.addEventListener('click', goBack);
+    nextBtn.addEventListener('click', goNext);
+
+    document.getElementById(config.resetBtnId).addEventListener('click', () => {
+      stopAuto();
+      renderStep(0);
+    });
+
+    renderStep(0);
+
+    // Expose controller for Left/Right keyboard arrows on this slide
+    if (typeof config.slideIndex === 'number') {
+      activeSimulators[config.slideIndex] = {
+        back: goBack,
+        next: goNext,
+        canBack: () => stepIdx > 0,
+        canNext: () => stepIdx < total - 1
+      };
+    }
+  }
+
+  /* --------------------------------------------------------------------------
+     E. SLIDE 3 DATA: FORD-FULKERSON (6 DFS ROUTES)
+     -------------------------------------------------------------------------- */
+  initSimulator({
+    slideIndex: 2,
+    prefix: 'ff',
+    stageId: 'svgStageFF',
+    logId: 'ffLog',
+    dotsId: 'ffDots',
+    stepLabelId: 'ffStepLabel',
+    flowLabelId: 'ffFlowLabel',
+    stepCountId: 'ffStepCount',
+    stepShortId: 'ffStepShort',
+    playBtnId: 'ffPlayBtn',
+    prevBtnId: 'ffPrevBtn',
+    nextBtnId: 'ffNextBtn',
+    resetBtnId: 'ffResetBtn',
+    steps: [
+      {
+        shortPill: 'Init (0)',
+        hudStep: 'Initial Zero Flow',
+        hudFlow: 'Total Flow: 0 / 19',
+        flows: { SA:0, SB:0, AB:0, AC:0, AD:0, BD:0, DC:0, CT:0, DT:0 },
+        logHtml: '<strong>Init:</strong> All flows set to 0. DFS searches for any augmenting path from S to T.'
+      },
+      {
+        shortPill: 'Route 1 (+2)',
+        hudStep: 'Route 1: S → A → B → D → C → T (+2)',
+        hudFlow: 'Total Flow: 2 / 19',
+        flows: { SA:2, SB:0, AB:2, AC:0, AD:0, BD:2, DC:2, CT:2, DT:0 },
+        fwdEdges: ['SA', 'AB', 'BD', 'DC', 'CT'],
+        logHtml: '<strong>Route 1 (+2):</strong> S → A → B → D → C → T. Bottleneck A→B (2/2) saturates.'
+      },
+      {
+        shortPill: 'Route 2 (-2)',
+        hudStep: 'Route 2: S → A → C ⇠ D → T (+2)',
+        hudFlow: 'Total Flow: 4 / 19',
+        flows: { SA:4, SB:0, AB:2, AC:2, AD:0, BD:2, DC:0, CT:2, DT:2 },
+        fwdEdges: ['SA', 'AC', 'DT'],
+        revEdges: ['DC'],
+        type: 'reverse-note',
+        logHtml: '<strong>Route 2 (+2) [Cancel]:</strong> S → A → C ⇠ D → T pushes 2 backward on D→C (2→0), redirecting to D→T.'
+      },
+      {
+        shortPill: 'Route 3 (+2)',
+        hudStep: 'Route 3: S → A → C → T (+2)',
+        hudFlow: 'Total Flow: 6 / 19',
+        flows: { SA:6, SB:0, AB:2, AC:4, AD:0, BD:2, DC:0, CT:4, DT:2 },
+        fwdEdges: ['SA', 'AC', 'CT'],
+        logHtml: '<strong>Route 3 (+2):</strong> S → A → C → T. Saturates A→C (4/4).'
+      },
+      {
+        shortPill: 'Route 4 (+4)',
+        hudStep: 'Route 4: S → A → D → C → T (+4)',
+        hudFlow: 'Total Flow: 10 / 19',
+        flows: { SA:10, SB:0, AB:2, AC:4, AD:4, BD:2, DC:4, CT:8, DT:2 },
+        fwdEdges: ['SA', 'AD', 'DC', 'CT'],
+        logHtml: '<strong>Route 4 (+4):</strong> S → A → D → C → T. Saturates S→A (10/10).'
+      },
+      {
+        shortPill: 'Route 5 (-2)',
+        hudStep: 'Route 5: S → B ⇠ A → D → C → T (+2)',
+        hudFlow: 'Total Flow: 12 / 19',
+        flows: { SA:10, SB:2, AB:0, AC:4, AD:6, BD:2, DC:6, CT:10, DT:2 },
+        fwdEdges: ['SB', 'AD', 'DC', 'CT'],
+        revEdges: ['AB'],
+        type: 'reverse-note',
+        logHtml: '<strong>Route 5 (+2) [Cancel]:</strong> S → B ⇠ A → D → C → T cancels 2 on A→B (2→0) and saturates C→T (10/10).'
+      },
+      {
+        shortPill: 'Route 6 (19)',
+        hudStep: 'Route 6: S → B → D → T (+7) — DONE',
+        hudFlow: 'Max Flow: 19 / 19 ✓',
+        flows: { SA:10, SB:9, AB:0, AC:4, AD:6, BD:9, DC:6, CT:10, DT:9 },
+        fwdEdges: ['SB', 'BD', 'DT'],
+        showCut: true,
+        type: 'done-note',
+        logHtml: '<strong>Route 6 (+7) [Optimal]:</strong> S → B → D → T saturates B→D (9/9). Min Cut {S, B} = 19 reached!'
+      }
+    ]
+  });
+
+  /* --------------------------------------------------------------------------
+     F. SLIDE 4 DATA: EDMONDS-KARP (4 BFS SHORTEST ROUTES)
+     -------------------------------------------------------------------------- */
+  initSimulator({
+    slideIndex: 3,
+    prefix: 'ek',
+    stageId: 'svgStageEK',
+    logId: 'ekLog',
+    dotsId: 'ekDots',
+    stepLabelId: 'ekStepLabel',
+    flowLabelId: 'ekFlowLabel',
+    stepCountId: 'ekStepCount',
+    stepShortId: 'ekStepShort',
+    playBtnId: 'ekPlayBtn',
+    prevBtnId: 'ekPrevBtn',
+    nextBtnId: 'ekNextBtn',
+    resetBtnId: 'ekResetBtn',
+    steps: [
+      {
+        shortPill: 'Init (0)',
+        hudStep: 'Initial Network',
+        hudFlow: 'Total Flow: 0 / 19',
+        flows: { SA:0, SB:0, AB:0, AC:0, AD:0, BD:0, DC:0, CT:0, DT:0 },
+        logHtml: '<strong>Init:</strong> BFS always selects the augmenting path with the fewest edges (hops).'
+      },
+      {
+        shortPill: 'Aug 1 (+4)',
+        hudStep: 'Augmentation 1 (3 hops): S → A → C → T (+4)',
+        hudFlow: 'Total Flow: 4 / 19',
+        flows: { SA:4, SB:0, AB:0, AC:4, AD:0, BD:0, DC:0, CT:4, DT:0 },
+        fwdEdges: ['SA', 'AC', 'CT'],
+        logHtml: '<strong>Aug 1 (3 hops, +4):</strong> S → A → C → T. Bottleneck A→C (4/4) saturates.'
+      },
+      {
+        shortPill: 'Aug 2 (+6)',
+        hudStep: 'Augmentation 2 (3 hops): S → A → D → T (+6)',
+        hudFlow: 'Total Flow: 10 / 19',
+        flows: { SA:10, SB:0, AB:0, AC:4, AD:6, BD:0, DC:0, CT:4, DT:6 },
+        fwdEdges: ['SA', 'AD', 'DT'],
+        logHtml: '<strong>Aug 2 (3 hops, +6):</strong> S → A → D → T. Bottleneck S→A (10/10) saturates.'
+      },
+      {
+        shortPill: 'Aug 3 (+4)',
+        hudStep: 'Augmentation 3 (3 hops): S → B → D → T (+4)',
+        hudFlow: 'Total Flow: 14 / 19',
+        flows: { SA:10, SB:4, AB:0, AC:4, AD:6, BD:4, DC:0, CT:4, DT:10 },
+        fwdEdges: ['SB', 'BD', 'DT'],
+        logHtml: '<strong>Aug 3 (3 hops, +4):</strong> S → B → D → T. Bottleneck D→T (10/10) saturates.'
+      },
+      {
+        shortPill: 'Aug 4 (+5)',
+        hudStep: 'Augmentation 4 (4 hops): S → B → D → C → T (+5)',
+        hudFlow: 'Total Flow: 19 / 19',
+        flows: { SA:10, SB:9, AB:0, AC:4, AD:6, BD:9, DC:5, CT:9, DT:10 },
+        fwdEdges: ['SB', 'BD', 'DC', 'CT'],
+        logHtml: '<strong>Aug 4 (4 hops, +5):</strong> S → B → D → C → T. Bottleneck B→D (9/9) saturates.'
+      },
+      {
+        shortPill: 'BFS #5 (19)',
+        hudStep: 'BFS #5: T Unreachable — Optimal Flow 19',
+        hudFlow: 'Max Flow: 19 / 19 ✓',
+        flows: { SA:10, SB:9, AB:0, AC:4, AD:6, BD:9, DC:5, CT:9, DT:10 },
+        showCut: true,
+        type: 'done-note',
+        logHtml: '<strong>BFS #5 [Optimal]:</strong> Only {S, B} reachable from S. Min Cut = 10 + 9 = 19 (0 reverse cancellations!).'
+      }
+    ]
+  });
+
+  /* --------------------------------------------------------------------------
+     G. SLIDE 5 DATA: DINIC'S ALGORITHM (2 PHASES, LEVEL GRAPHS)
+     -------------------------------------------------------------------------- */
+  initSimulator({
+    slideIndex: 4,
+    prefix: 'dinic',
+    stageId: 'svgStageDinic',
+    logId: 'dinicLog',
+    dotsId: 'dinicDots',
+    stepLabelId: 'dinicStepLabel',
+    flowLabelId: 'dinicFlowLabel',
+    stepCountId: 'dinicStepCount',
+    stepShortId: 'dinicStepShort',
+    playBtnId: 'dinicPlayBtn',
+    prevBtnId: 'dinicPrevBtn',
+    nextBtnId: 'dinicNextBtn',
+    resetBtnId: 'dinicResetBtn',
+    showBadge: true,
+    steps: [
+      {
+        shortPill: 'Init',
+        hudStep: 'Initial Network',
+        hudFlow: 'Total Flow: 0 / 19',
+        flows: { SA:0, SB:0, AB:0, AC:0, AD:0, BD:0, DC:0, CT:0, DT:0 },
+        badges: { S:'L0', A:'-', B:'-', C:'-', D:'-', T:'-' },
+        logHtml: '<strong>Init:</strong> Dinic alternates between building a BFS level graph and pushing a blocking flow.'
+      },
+      {
+        shortPill: 'P1 Levels',
+        hudStep: 'Phase 1 Build Levels (Sink T at Level 3)',
+        hudFlow: 'Total Flow: 0 / 19',
+        flows: { SA:0, SB:0, AB:0, AC:0, AD:0, BD:0, DC:0, CT:0, DT:0 },
+        badges: { S:'Level 0', A:'Level 1', B:'Level 1', C:'Level 2', D:'Level 2', T:'Level 3' },
+        fadedEdges: ['AB', 'DC'],
+        logHtml: '<strong>Phase 1 BFS:</strong> T is at Level 3. Same-level edges A→B and D→C fade out of level graph L_G.'
+      },
+      {
+        shortPill: 'P1 R1 (+4)',
+        hudStep: 'Phase 1, Route 1: S → A → C → T (+4)',
+        hudFlow: 'Total Flow: 4 / 19',
+        flows: { SA:4, SB:0, AB:0, AC:4, AD:0, BD:0, DC:0, CT:4, DT:0 },
+        badges: { S:'Level 0', A:'Level 1', B:'Level 1', C:'Level 2', D:'Level 2', T:'Level 3' },
+        fwdEdges: ['SA', 'AC', 'CT'],
+        fadedEdges: ['AB', 'DC'],
+        logHtml: '<strong>Phase 1, Route 1 (+4):</strong> Pushes 4 along S → A → C → T inside L_G.'
+      },
+      {
+        shortPill: 'P1 R2 (+6)',
+        hudStep: 'Phase 1, Route 2: S → A → D → T (+6)',
+        hudFlow: 'Total Flow: 10 / 19',
+        flows: { SA:10, SB:0, AB:0, AC:4, AD:6, BD:0, DC:0, CT:4, DT:6 },
+        badges: { S:'Level 0', A:'Level 1', B:'Level 1', C:'Level 2', D:'Level 2', T:'Level 3' },
+        fwdEdges: ['SA', 'AD', 'DT'],
+        fadedEdges: ['AB', 'DC'],
+        logHtml: '<strong>Phase 1, Route 2 (+6):</strong> Pushes 6 along S → A → D → T (saturating S→A).'
+      },
+      {
+        shortPill: 'P1 R3 (+4)',
+        hudStep: 'Phase 1, Route 3: S → B → D → T (+4) [Blocked]',
+        hudFlow: 'Total Flow: 14 / 19',
+        flows: { SA:10, SB:4, AB:0, AC:4, AD:6, BD:4, DC:0, CT:4, DT:10 },
+        badges: { S:'Level 0', A:'Level 1', B:'Level 1', C:'Level 2', D:'Level 2', T:'Level 3' },
+        fwdEdges: ['SB', 'BD', 'DT'],
+        fadedEdges: ['AB', 'DC'],
+        logHtml: '<strong>Phase 1, Route 3 (+4):</strong> Pushes 4 along S → B → D → T. Phase 1 blocking flow complete (14)!'
+      },
+      {
+        shortPill: 'P2 Levels',
+        hudStep: 'Phase 2 Rebuild Levels (Sink T rises to Level 4)',
+        hudFlow: 'Total Flow: 14 / 19',
+        flows: { SA:10, SB:4, AB:0, AC:4, AD:6, BD:4, DC:0, CT:4, DT:10 },
+        badges: { S:'Level 0', A:'Level 3', B:'Level 1', C:'Level 3', D:'Level 2', T:'Level 4' },
+        fadedEdges: ['SA', 'AC', 'AB', 'DT'],
+        logHtml: '<strong>Phase 2 BFS:</strong> Sink T rises from Level 3 → Level 4 via S(L0)→B(L1)→D(L2)→C(L3)→T(L4).'
+      },
+      {
+        shortPill: 'P2 R4 (+5)',
+        hudStep: 'Phase 2, Route 4: S → B → D → C → T (+5)',
+        hudFlow: 'Total Flow: 19 / 19',
+        flows: { SA:10, SB:9, AB:0, AC:4, AD:6, BD:9, DC:5, CT:9, DT:10 },
+        badges: { S:'Level 0', A:'Level 3', B:'Level 1', C:'Level 3', D:'Level 2', T:'Level 4' },
+        fwdEdges: ['SB', 'BD', 'DC', 'CT'],
+        fadedEdges: ['SA', 'AC', 'AB', 'DT'],
+        logHtml: '<strong>Phase 2, Route 4 (+5):</strong> Pushes 5 along S → B → D → C → T, saturating B→D (9/9).'
+      },
+      {
+        shortPill: 'Done (19)',
+        hudStep: 'Phase 3 BFS: T Unreachable — Max Flow 19',
+        hudFlow: 'Max Flow: 19 / 19 ✓',
+        flows: { SA:10, SB:9, AB:0, AC:4, AD:6, BD:9, DC:5, CT:9, DT:10 },
+        badges: { S:'Level 0', A:'∞', B:'Level 1', C:'∞', D:'∞', T:'∞' },
+        showCut: true,
+        type: 'done-note',
+        logHtml: '<strong>Phase 3 [Optimal]:</strong> BFS cannot reach T after 2 phases. Min Cut {S, B} = 19.'
+      }
+    ]
+  });
+
+  /* --------------------------------------------------------------------------
+     H. SLIDE 6 DATA: PUSH-RELABEL (PREFLOW, HEIGHTS & EXCESS RETURN)
+     -------------------------------------------------------------------------- */
+  initSimulator({
+    slideIndex: 5,
+    prefix: 'pr',
+    stageId: 'svgStagePR',
+    logId: 'prLog',
+    dotsId: 'prDots',
+    stepLabelId: 'prStepLabel',
+    flowLabelId: 'prFlowLabel',
+    stepCountId: 'prStepCount',
+    stepShortId: 'prStepShort',
+    playBtnId: 'prPlayBtn',
+    prevBtnId: 'prPrevBtn',
+    nextBtnId: 'prNextBtn',
+    resetBtnId: 'prResetBtn',
+    showBadge: true,
+    steps: [
+      {
+        shortPill: 'Init Lift S',
+        hudStep: 'Init: Lift S (h=6) & Saturate Outgoing',
+        hudFlow: 'Sink T Flow: 0 / 19',
+        flows: { SA:10, SB:10, AB:0, AC:0, AD:0, BD:0, DC:0, CT:0, DT:0 },
+        badges: { S:'h=6 | e=0', A:'h=0 | e=10', B:'h=0 | e=10', C:'h=0 | e=0', D:'h=0 | e=0', T:'h=0 | in=0' },
+        fwdEdges: ['SA', 'SB'],
+        logHtml: '<strong>Init:</strong> Lift S to h=|V|=6 and saturate S→A (10) &amp; S→B (10). Excess e(A)=10, e(B)=10.'
+      },
+      {
+        shortPill: 'Push A',
+        hudStep: 'Relabel A (h=0→1) & Push to C (4), D (6)',
+        hudFlow: 'Sink T Flow: 0 / 19',
+        flows: { SA:10, SB:10, AB:0, AC:4, AD:6, BD:0, DC:0, CT:0, DT:0 },
+        badges: { S:'h=6 | e=0', A:'h=1 | e=0', B:'h=0 | e=10', C:'h=0 | e=4', D:'h=0 | e=6', T:'h=0 | in=0' },
+        fwdEdges: ['AC', 'AD'],
+        logHtml: '<strong>Relabel &amp; Push A:</strong> A lifts to h=1 and pushes 4 to C and 6 to D (all admissible downhill edges).'
+      },
+      {
+        shortPill: 'Push B',
+        hudStep: 'Relabel B (h=0→1) & Push 9 to D',
+        hudFlow: 'Sink T Flow: 0 / 19',
+        flows: { SA:10, SB:10, AB:0, AC:4, AD:6, BD:9, DC:0, CT:0, DT:0 },
+        badges: { S:'h=6 | e=0', A:'h=1 | e=0', B:'h=1 | e=1', C:'h=0 | e=4', D:'h=0 | e=15', T:'h=0 | in=0' },
+        fwdEdges: ['BD'],
+        logHtml: '<strong>Relabel &amp; Push B:</strong> B lifts to h=1 and pushes 9 to D (saturating B→D). B retains e(B)=1!'
+      },
+      {
+        shortPill: 'Drain to T',
+        hudStep: 'Relabel C & D, Drain 19 Units into Sink T',
+        hudFlow: 'Sink T Flow: 19 / 19',
+        flows: { SA:10, SB:10, AB:0, AC:4, AD:6, BD:9, DC:5, CT:9, DT:10 },
+        badges: { S:'h=6 | e=0', A:'h=1 | e=0', B:'h=1 | e=1', C:'h=1 | e=0', D:'h=2 | e=0', T:'h=0 | in=19' },
+        fwdEdges: ['CT', 'DT', 'DC'],
+        logHtml: '<strong>Drain to T:</strong> C(h=1) &amp; D(h=1→2) push 19 units into T(h=0). Only e(B)=1 remains stranded.'
+      },
+      {
+        shortPill: 'Return (19)',
+        hudStep: 'B Lifts to h=7 > h(S) & Returns 1 Unit to S',
+        hudFlow: 'Max Flow: 19 / 19 ✓',
+        flows: { SA:10, SB:9, AB:0, AC:4, AD:6, BD:9, DC:5, CT:9, DT:10 },
+        badges: { S:'h=6 | e=0', A:'h=1 | e=0', B:'h=7 | e=0', C:'h=1 | e=0', D:'h=2 | e=0', T:'h=0 | in=19' },
+        revEdges: ['SB'],
+        showCut: true,
+        type: 'done-note',
+        logHtml: '<strong>Excess Return [Optimal]:</strong> Blocked B relabels up to h=7 &gt; h(S)=6 and pushes 1 back along B→S (S→B becomes 9/10).'
+      }
+    ]
+  });
+
+  /* --------------------------------------------------------------------------
+     I. SLIDE 7: DENSE GRAPH COMPLEXITY BARS
+     -------------------------------------------------------------------------- */
+  const barsContainer = document.getElementById('complexityBarsContainer');
+  const vSelect = document.getElementById('vertexScaleSelect');
+
+  function renderComplexityBars(V) {
+    const models = [
+      { name: 'Edmonds–Karp: O(V · E²) = O(V⁵)', val: Math.pow(V, 5), color: '#dc2626' },
+      { name: 'Dinic / Generic Push–Relabel: O(V² · E) = O(V⁴)', val: Math.pow(V, 4), color: '#d97706' },
+      { name: 'Push–Relabel (FIFO / Highest-Label): O(V³)', val: Math.pow(V, 3), color: '#2563eb' },
+      { name: 'Li & Wice (2026): E^{1+o(1)} ≈ O(V^{2.05})', val: Math.pow(V, 2.05), color: '#059669' }
+    ];
+    const maxLog = Math.log10(models[0].val);
+    barsContainer.innerHTML = models.map(m => {
+      const pct = Math.max(12, Math.round((Math.log10(m.val) / maxLog) * 100));
+      return `
+        <div class="bar-row">
+          <div class="bar-meta">
+            <span>${m.name}</span>
+            <span class="mono-badge">~${Math.round(m.val).toLocaleString()} ops</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct}%; background:${m.color};"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  vSelect.addEventListener('change', (e) => renderComplexityBars(Number(e.target.value)));
+  renderComplexityBars(50);
+
+  /* --------------------------------------------------------------------------
+     J. SLIDE 8: ENGINEERING SELECTION ADVISOR
+     -------------------------------------------------------------------------- */
+  const scenarios = {
+    sparse: {
+      title: 'Recommended: Dinic’s Algorithm (1970)',
+      badge: 'O(E √V) on Unit / Bipartite Networks',
+      bullets: [
+        '<strong>Why it excels:</strong> On unit-capacity networks and bipartite matching graphs, Dinic terminates in O(√V) phases, achieving O(E √V) time.',
+        '<strong>Implementation Footprint:</strong> Simple iterative BFS + recursive/stack DFS with current-arc pointers; requires minimal auxiliary memory.',
+        '<strong>Ideal Use Cases:</strong> Network connectivity, bipartite assignment, image segmentation grids, and sparse transportation graphs.'
+      ],
+      tip: 'Pro Tip: Always maintain a current-arc pointer array ptr[u] per phase so dead-end edges are never re-scanned.'
+    },
+    dense: {
+      title: 'Recommended: Goldberg–Tarjan Push–Relabel (Highest-Label)',
+      badge: 'O(V² √E) = O(V³) on Dense Graphs',
+      bullets: [
+        '<strong>Why it excels:</strong> Eliminates global BFS/DFS traversals; operates purely locally on vertex heights and excess buffers with high cache locality.',
+        '<strong>Essential Practical Heuristics:</strong> Combine Highest-Label priority queue with <em>Global Relabeling</em> (periodic backward BFS from T) and <em>Gap Heuristics</em>.',
+        '<strong>Ideal Use Cases:</strong> Dense flow networks (E ≈ V²), computer vision min-cut energy minimization, and VLSI circuit partitioning.'
+      ],
+      tip: 'Pro Tip: Adding the Gap Heuristic detects disconnected vertex height layers immediately and lifts them to |V| + 1 in O(1) amortized time.'
+    },
+    massive: {
+      title: 'Recommended: 2026 IPM-Free Almost-Linear & Dynamic Solvers',
+      badge: 'E^{1+o(1)} Static • Polynomial Dynamic MFOT',
+      bullets: [
+        '<strong>Massive Static Graphs (E > 10⁸):</strong> Li & Wice (2026) achieve E^{1+o(1)} runtime combinatorially without outer interior-point method overhead.',
+        '<strong>Time-Varying Networks:</strong> Chawla & Sheridan (2026) maintain optimal flows over time under dynamic capacity changes and link disruptions.',
+        '<strong>Ideal Use Cases:</strong> Web-scale social/communication graphs, dynamic traffic routing, and resilient power grid dispatch.'
+      ],
+      tip: 'Pro Tip: For dynamic networks, incremental residual updates avoid full recomputation across the entire time-expanded graph.'
+    }
+  };
+
+  const scenContent = document.getElementById('scenarioContent');
+  function renderScenario(key) {
+    const s = scenarios[key];
+    scenContent.innerHTML = `
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+          <strong style="font-size:14px; color:var(--accent-primary);">${s.title}</strong>
+          <span class="mono-badge">${s.badge}</span>
+        </div>
+        <ul>${s.bullets.map(b => `<li>${b}</li>`).join('')}</ul>
+      </div>
+      <div class="formula-box" style="margin-top:10px;">${s.tip}</div>
+    `;
+  }
+
+  document.querySelectorAll('#scenarioTabs .scen-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#scenarioTabs .scen-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderScenario(btn.dataset.scen);
+    });
+  });
+  renderScenario('sparse');
+})();
+</script>
+</body>
+</html>
