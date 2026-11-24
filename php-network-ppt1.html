@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum-Resistant Key Management — Waleed H. Al-Fakiat</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Playfair Display, Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        ju: {
+                            emerald: '#006838',
+                            dark: '#004A28',
+                            light: '#ECFDF5',
+                            crimson: '#B91C1C',
+                            gold: '#B45309',
+                            ivory: '#FAF9F5',
+                            ink: '#111827'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #EFECE4;
+            color: #111827;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .slide-stage {
+            background-color: #FAF9F5;
+            background-image: radial-gradient(rgba(0, 104, 56, 0.06) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .hero-frame {
+            background: #FFFFFF;
+            border: 1px solid rgba(17, 24, 39, 0.08);
+            box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.06);
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+            z-index: 10;
+        }
+
+        @keyframes pulseFlow {
+            to { stroke-dashoffset: -24; }
+        }
+        .flow-dash {
+            stroke-dasharray: 6 6;
+            animation: pulseFlow 1.8s linear infinite;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between select-none">
+
+<!-- Top Academic Header -->
+<header class="h-14 px-6 md:px-10 bg-white/95 border-b border-slate-200/80 flex items-center justify-between shrink-0 z-30">
+    <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-lg bg-ju-emerald text-white flex items-center justify-center text-sm shadow-sm">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+            <div class="text-xs font-bold uppercase tracking-widest text-ju-emerald">The University of Jordan</div>
+            <div class="text-[11px] text-slate-500 hidden sm:block">Milestone 2 Defense • Quantum-Resistant Key Management</div>
+        </div>
+    </div>
+
+    <div class="flex items-center space-x-2.5">
+            <span class="font-mono text-xs font-bold text-slate-700 bg-ju-ivory px-3 py-1.5 rounded-lg border border-slate-200">
+                <span id="currentNum" class="text-ju-emerald">01</span> / 10
+            </span>
+        <button onclick="toggleOverview()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-ju-light text-slate-700 hover:text-ju-emerald border border-slate-200 transition flex items-center space-x-1.5" title="Slide Overview (G)">
+            <i class="fa-solid fa-grip text-ju-emerald"></i>
+            <span class="hidden sm:inline">Overview</span>
+            <kbd class="hidden md:inline text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">G</kbd>
+        </button>
+        <button onclick="toggleFullscreen()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-ju-light text-slate-700 hover:text-ju-emerald border border-slate-200 transition flex items-center space-x-1.5" title="Fullscreen (F)">
+            <i class="fa-solid fa-expand text-ju-emerald"></i>
+            <kbd class="hidden md:inline text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">F</kbd>
+        </button>
+    </div>
+</header>
+
+<!-- Center Slide Stage -->
+<main class="flex-1 p-4 sm:p-6 md:p-8 flex items-center justify-center overflow-hidden">
+    <div id="stageContainer" class="w-full max-w-5xl h-full max-h-[700px] slide-stage rounded-2xl shadow-2xl border border-slate-300/80 overflow-hidden relative flex flex-col">
+        <!-- Emerald & Gold Accent Bar -->
+        <div class="h-1.5 w-full bg-gradient-to-r from-ju-dark via-ju-emerald to-ju-gold shrink-0"></div>
+
+        <div class="relative flex-1 overflow-y-auto">
+
+            <!-- =========================================================
+                 SLIDE 1: TITLE SLIDE
+            ========================================================== -->
+            <section class="slide active p-8 sm:p-12 md:p-14 items-center text-center" data-title="Title Slide">
+                <div class="flex flex-col items-center space-y-3">
+                    <!-- Custom University of Jordan Shield Emblem SVG -->
+                    <span class="font-mono text-xs font-bold uppercase tracking-[0.2em] text-ju-emerald">
+                            The University of Jordan • Milestone 2 Defense
+                        </span>
+                </div>
+
+                <div class="max-w-3xl space-y-4 my-auto py-4">
+                    <h1 class="font-serif text-3xl sm:text-4xl md:text-[42px] font-extrabold text-ju-ink leading-tight">
+                        Quantum-Resistant Key Management: Enhancing Cryptographic Security Against Post-Quantum Threats in Modern Network Architectures
+                    </h1>
+                    <div class="w-20 h-1 bg-ju-gold mx-auto rounded-full"></div>
+                </div>
+
+                <div class="w-full max-w-2xl pt-5 border-t border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                    <div class="text-center sm:text-left">
+                        <span class="font-mono text-[11px] uppercase tracking-wider text-slate-400 block">Prepared by</span>
+                        <span class="font-bold text-ju-ink text-base">Waleed H. Al-Fakiat</span>
+                    </div>
+                    <div class="text-center sm:text-right">
+                        <span class="font-mono text-[11px] uppercase tracking-wider text-slate-400 block">Supervisor</span>
+                        <span class="font-bold text-ju-emerald text-base">Dr. Saleh Al-Sharaeh, Prof.</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- =========================================================
+                 SLIDE 2: CONCEPT 1 — SHOR'S ALGORITHM
+            ========================================================== -->
+            <section class="slide p-8 sm:p-12 items-center text-center" data-title="Shor's Algorithm">
+                <div class="space-y-2 max-w-3xl">
+                        <span class="font-mono text-xs font-bold uppercase tracking-widest text-ju-crimson bg-red-50 px-3 py-1 rounded-full border border-red-200">
+                            01 / SHOR'S ALGORITHM
+                        </span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-ju-ink pt-1">
+                        Shor's Algorithm Shatters Classical Public Keys
+                    </h2>
+                </div>
+
+                <!-- Hero SVG: Classical RSA/ECC Lock Shattered by Quantum Wave -->
+                <div class="hero-frame rounded-2xl p-6 sm:p-8 w-full max-w-3xl my-auto">
+                    <svg viewBox="0 0 640 240" class="w-full h-auto max-h-[240px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Left: Quantum Computer Wave -->
+                        <g transform="translate(30, 35)">
+                            <rect x="0" y="15" width="150" height="140" rx="16" fill="#ECFDF5" stroke="#006838" stroke-width="2.2"/>
+                            <circle cx="75" cy="70" r="32" stroke="#006838" stroke-width="2" stroke-dasharray="4 3"/>
+                            <ellipse cx="75" cy="70" rx="32" ry="12" stroke="#006838" stroke-width="1.8"/>
+                            <ellipse cx="75" cy="70" rx="12" ry="32" stroke="#006838" stroke-width="1.8"/>
+                            <circle cx="75" cy="70" r="5" fill="#006838"/>
+                            <text x="75" y="128" text-anchor="middle" fill="#004A28" font-family="Inter, sans-serif" font-size="13" font-weight="800">Quantum Qubits</text>
+                            <text x="75" y="144" text-anchor="middle" fill="#006838" font-family="JetBrains Mono, monospace" font-size="10">O((log N)³) Time</text>
+                        </g>
+
+                        <!-- Center: Quantum Fourier Wave Beam -->
+                        <g>
+                            <path d="M195 120 Q 230 75, 265 120 T 335 120 T 405 120" stroke="#B91C1C" stroke-width="3.5" fill="none" class="flow-dash"/>
+                            <polygon points="402,112 418,120 402,128" fill="#B91C1C"/>
+                            <rect x="242" y="42" width="132" height="26" rx="13" fill="#FEF2F2" stroke="#FECACA" stroke-width="1.5"/>
+                            <text x="308" y="59" text-anchor="middle" fill="#B91C1C" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">SHOR'S FOURIER</text>
+                        </g>
+
+                        <!-- Right: Shattered RSA / ECC Lock -->
+                        <g transform="translate(435, 35)">
+                            <rect x="0" y="15" width="175" height="140" rx="16" fill="#FEF2F2" stroke="#B91C1C" stroke-width="2.2" stroke-dasharray="6 4"/>
+                            <!-- Broken Shackle -->
+                            <path d="M62 65V50C62 37 72 28 85 28C93 28 100 32 104 38" stroke="#B91C1C" stroke-width="4" stroke-linecap="round"/>
+                            <!-- Cracked Lock Body -->
+                            <path d="M52 68H85L79 92L88 112H52V68Z" fill="#FEE2E2" stroke="#B91C1C" stroke-width="2.5" stroke-linejoin="round"/>
+                            <path d="M93 68H122V112H96L87 92L93 68Z" fill="#FEE2E2" stroke="#B91C1C" stroke-width="2.5" stroke-linejoin="round"/>
+                            <text x="87" y="133" text-anchor="middle" fill="#991B1B" font-family="Inter, sans-serif" font-size="13" font-weight="800">RSA &amp; ECC Broken</text>
+                            <text x="87" y="148" text-anchor="middle" fill="#B91C1C" font-family="JetBrains Mono, monospace" font-size="10">Factoring Compromised</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <p class="text-base sm:text-lg font-medium text-slate-700 max-w-2xl">
+                    Quantum computers solve integer factorization and discrete logarithms in polynomial time, compromising asymmetric key exchange.
+                </p>
+            </section>
+
+            <!-- =========================================================
+                 SLIDE 3: CONCEPT 2 — GROVER'S ALGORITHM
+            ========================================================== -->
+            <section class="slide p-8 sm:p-12 items-center text-center" data-title="Grover's Algorithm">
+                <div class="space-y-2 max-w-3xl">
+                        <span class="font-mono text-xs font-bold uppercase tracking-widest text-ju-gold bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                            02 / GROVER'S ALGORITHM
+                        </span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-ju-ink pt-1">
+                        Grover's Search Halves Symmetric Key Strength
+                    </h2>
+                </div>
+
+                <!-- Hero SVG: Search Space Shrinking 2^n -> 2^(n/2) -->
+                <div class="hero-frame rounded-2xl p-6 sm:p-8 w-full max-w-3xl my-auto">
+                    <svg viewBox="0 0 640 240" class="w-full h-auto max-h-[240px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Left: Classical Search Space 2^n -->
+                        <g transform="translate(35, 25)">
+                            <rect x="0" y="0" width="210" height="190" rx="16" fill="#FAF9F5" stroke="#64748B" stroke-width="2"/>
+                            <!-- Dense Grid Representing 2^n -->
+                            <g fill="#94A3B8" opacity="0.55">
+                                <circle cx="35" cy="35" r="4"/><circle cx="60" cy="35" r="4"/><circle cx="85" cy="35" r="4"/><circle cx="110" cy="35" r="4"/><circle cx="135" cy="35" r="4"/><circle cx="160" cy="35" r="4"/><circle cx="180" cy="35" r="4"/>
+                                <circle cx="35" cy="58" r="4"/><circle cx="60" cy="58" r="4"/><circle cx="85" cy="58" r="4"/><circle cx="110" cy="58" r="4"/><circle cx="135" cy="58" r="4"/><circle cx="160" cy="58" r="4"/><circle cx="180" cy="58" r="4"/>
+                                <circle cx="35" cy="81" r="4"/><circle cx="60" cy="81" r="4"/><circle cx="85" cy="81" r="4"/><circle cx="110" cy="81" r="5" fill="#006838"/><circle cx="135" cy="81" r="4"/><circle cx="160" cy="81" r="4"/><circle cx="180" cy="81" r="4"/>
+                                <circle cx="35" cy="104" r="4"/><circle cx="60" cy="104" r="4"/><circle cx="85" cy="104" r="4"/><circle cx="110" cy="104" r="4"/><circle cx="135" cy="104" r="4"/><circle cx="160" cy="104" r="4"/><circle cx="180" cy="104" r="4"/>
+                            </g>
+                            <text x="105" y="142" text-anchor="middle" fill="#111827" font-family="JetBrains Mono, monospace" font-size="18" font-weight="800">2ⁿ Operations</text>
+                            <text x="105" y="166" text-anchor="middle" fill="#475569" font-family="Inter, sans-serif" font-size="12" font-weight="600">Classical Brute Force (n-bit)</text>
+                        </g>
+
+                        <!-- Center: Quadratic Speedup Arrow -->
+                        <g>
+                            <path d="M262 120H372" stroke="#B45309" stroke-width="3" class="flow-dash"/>
+                            <polygon points="370,113 384,120 370,127" fill="#B45309"/>
+                            <rect x="266" y="84" width="110" height="24" rx="12" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5"/>
+                            <text x="321" y="100" text-anchor="middle" fill="#92400E" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">√N SPEEDUP</text>
+                        </g>
+
+                        <!-- Right: Quantum Search Space 2^(n/2) -->
+                        <g transform="translate(395, 45)">
+                            <rect x="0" y="0" width="210" height="150" rx="16" fill="#FFFBEB" stroke="#B45309" stroke-width="2.5"/>
+                            <!-- Amplified Target Node -->
+                            <circle cx="105" cy="52" r="24" fill="#FEF3C7" stroke="#B45309" stroke-width="2" stroke-dasharray="3 3"/>
+                            <circle cx="105" cy="52" r="10" fill="#B45309"/>
+                            <text x="105" y="104" text-anchor="middle" fill="#92400E" font-family="JetBrains Mono, monospace" font-size="18" font-weight="800">2ⁿ/² Operations</text>
+                            <text x="105" y="128" text-anchor="middle" fill="#B45309" font-family="Inter, sans-serif" font-size="12" font-weight="600">Effective Security Halved</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <p class="text-base sm:text-lg font-medium text-slate-700 max-w-2xl">
+                    Quadratic quantum search reduces an <span class="font-mono font-bold text-ju-ink">n</span>-bit cipher to <span class="font-mono font-bold text-ju-gold">n/2</span>-bit security, weakening lightweight IoT ciphers.
+                </p>
+            </section>
+
+            <!-- =========================================================
+                 SLIDE 4: CONCEPT 3 — HARVEST-NOW, DECRYPT-LATER
+            ========================================================== -->
+            <section class="slide p-8 sm:p-12 items-center text-center" data-title="Harvest-Now, Decrypt-Later">
+                <div class="space-y-2 max-w-3xl">
+                        <span class="font-mono text-xs font-bold uppercase tracking-widest text-ju-crimson bg-red-50 px-3 py-1 rounded-full border border-red-200">
+                            03 / TEMPORAL RISK
+                        </span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-ju-ink pt-1">
+                        Harvest-Now, Decrypt-Later Creates Immediate Risk
+                    </h2>
+                </div>
+
+                <!-- Hero SVG: Timeline Interception Today -> Quantum Decryption Later -->
+                <div class="hero-frame rounded-2xl p-6 sm:p-8 w-full max-w-3xl my-auto">
+                    <svg viewBox="0 0 640 240" class="w-full h-auto max-h-[240px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Timeline Axis -->
+                        <line x1="60" y1="185" x2="580" y2="185" stroke="#CBD5E1" stroke-width="3" stroke-linecap="round"/>
+
+                        <!-- Stage 1: TODAY (Harvest) -->
+                        <g transform="translate(50, 22)">
+                            <rect x="0" y="0" width="165" height="125" rx="14" fill="#FAF9F5" stroke="#475569" stroke-width="2"/>
+                            <circle cx="82" cy="44" r="20" fill="#E2E8F0"/>
+                            <path d="M74 44H90M82 36V52" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/>
+                            <text x="82" y="85" text-anchor="middle" fill="#111827" font-family="Inter, sans-serif" font-size="14" font-weight="800">1. Intercept Today</text>
+                            <text x="82" y="105" text-anchor="middle" fill="#64748B" font-family="JetBrains Mono, monospace" font-size="10">Capture Ciphertext</text>
+                        </g>
+                        <circle cx="132" cy="185" r="7" fill="#475569"/>
+                        <text x="132" y="212" text-anchor="middle" fill="#475569" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">TODAY</text>
+
+                        <!-- Arrow 1 -> 2 -->
+                        <path d="M222 84H246" stroke="#B45309" stroke-width="2.5" class="flow-dash"/>
+
+                        <!-- Stage 2: STORAGE (Vault) -->
+                        <g transform="translate(248, 22)">
+                            <rect x="0" y="0" width="150" height="125" rx="14" fill="#FFFBEB" stroke="#B45309" stroke-width="2"/>
+                            <rect x="55" y="26" width="40" height="34" rx="6" fill="#FEF3C7" stroke="#B45309" stroke-width="2"/>
+                            <circle cx="75" cy="43" r="5" fill="#B45309"/>
+                            <text x="75" y="85" text-anchor="middle" fill="#92400E" font-family="Inter, sans-serif" font-size="14" font-weight="800">2. Store Archive</text>
+                            <text x="75" y="105" text-anchor="middle" fill="#B45309" font-family="JetBrains Mono, monospace" font-size="10">Long-Term Vault</text>
+                        </g>
+                        <circle cx="323" cy="185" r="7" fill="#B45309"/>
+                        <text x="323" y="212" text-anchor="middle" fill="#B45309" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">TRANSITION</text>
+
+                        <!-- Arrow 2 -> 3 -->
+                        <path d="M405 84H429" stroke="#B91C1C" stroke-width="2.5" class="flow-dash"/>
+
+                        <!-- Stage 3: FUTURE (Decrypt) -->
+                        <g transform="translate(432, 22)">
+                            <rect x="0" y="0" width="165" height="125" rx="14" fill="#FEF2F2" stroke="#B91C1C" stroke-width="2.2"/>
+                            <circle cx="82" cy="44" r="20" fill="#FEE2E2"/>
+                            <path d="M74 44L80 50L92 38" stroke="#B91C1C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <text x="82" y="85" text-anchor="middle" fill="#991B1B" font-family="Inter, sans-serif" font-size="14" font-weight="800">3. Decrypt Later</text>
+                            <text x="82" y="105" text-anchor="middle" fill="#B91C1C" font-family="JetBrains Mono, monospace" font-size="10">Secrets Exposed</text>
+                        </g>
+                        <circle cx="514" cy="185" r="7" fill="#B91C1C"/>
+                        <text x="514" y="212" text-anchor="middle" fill="#B91C1C" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">Q-DAY</text>
+                    </svg>
+                </div>
+
+                <p class="text-base sm:text-lg font-medium text-slate-700 max-w-2xl">
+                    Adversaries harvest encrypted network traffic today to decrypt sensitive data once fault-tolerant quantum computers arrive.
+                </p>
+            </section>
+
+            <!-- =========================================================
+                 SLIDE 5: CONCEPT 4 — THE IOT RESOURCE BOTTLENECK
+            ========================================================== -->
+            <section class="slide p-8 sm:p-12 items-center text-center" data-title="The IoT Bottleneck">
+                <div class="space-y-2 max-w-3xl">
+                        <span class="font-mono text-xs font-bold uppercase tracking-widest text-ju-emerald bg-ju-light px-3 py-1 rounded-full border border-ju-emerald/20">
+                            04 / PROBLEM STATEMENT
+                        </span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-ju-ink pt-1">
+                        Heavy Post-Quantum Keys Overwhelm Constrained IoT Devices
+                    </h2>
+                </div>
+
+                <!-- Hero SVG: Large 1,184B PQC Key hitting narrow IoT MCU bottleneck -->
+                <div class="hero-frame rounded-2xl p-6 sm:p-8 w-full max-w-3xl my-auto">
+                    <svg viewBox="0 0 640 240" class="w-full h-auto max-h-[240px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Left: Massive PQC Key Block -->
+                        <g transform="translate(30, 25)">
+                            <rect x="0" y="0" width="215" height="190" rx="16" fill="#FFFBEB" stroke="#B45309" stroke-width="2.5"/>
+                            <rect x="22" y="24" width="171" height="72" rx="10" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+                            <text x="107" y="55" text-anchor="middle" fill="#92400E" font-family="JetBrains Mono, monospace" font-size="18" font-weight="800">1,184 Bytes</text>
+                            <text x="107" y="76" text-anchor="middle" fill="#B45309" font-family="Inter, sans-serif" font-size="11" font-weight="700">ML-KEM-768 Public Key</text>
+                            <text x="107" y="132" text-anchor="middle" fill="#78350F" font-family="Inter, sans-serif" font-size="13" font-weight="700">High RAM &amp; Bandwidth</text>
+                            <text x="107" y="152" text-anchor="middle" fill="#92400E" font-family="JetBrains Mono, monospace" font-size="11">Polynomial Matrix Ops</text>
+                        </g>
+
+                        <!-- Center: Funnel Bottleneck -->
+                        <g>
+                            <path d="M255 40 L355 98 L355 142 L255 200 Z" fill="#FEF2F2" stroke="#B91C1C" stroke-width="2"/>
+                            <rect x="275" y="104" width="96" height="32" rx="8" fill="#B91C1C"/>
+                            <text x="323" y="124" text-anchor="middle" fill="#FFFFFF" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">BOTTLENECK</text>
+                        </g>
+
+                        <!-- Right: Tiny IoT Microcontroller -->
+                        <g transform="translate(395, 62)">
+                            <!-- MCU Pins -->
+                            <g stroke="#006838" stroke-width="2.5" stroke-linecap="round">
+                                <line x1="35" y1="-8" x2="35" y2="0"/><line x1="75" y1="-8" x2="75" y2="0"/><line x1="115" y1="-8" x2="115" y2="0"/><line x1="155" y1="-8" x2="155" y2="0"/>
+                                <line x1="35" y1="116" x2="35" y2="124"/><line x1="75" y1="116" x2="75" y2="124"/><line x1="115" y1="116" x2="115" y2="124"/><line x1="155" y1="116" x2="155" y2="124"/>
+                            </g>
+                            <rect x="0" y="0" width="195" height="116" rx="14" fill="#ECFDF5" stroke="#006838" stroke-width="2.5"/>
+                            <text x="97" y="42" text-anchor="middle" fill="#004A28" font-family="Inter, sans-serif" font-size="15" font-weight="800">IoT / WSN Node</text>
+                            <text x="97" y="66" text-anchor="middle" fill="#006838" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700">8–32 KB SRAM</text>
+                            <text x="97" y="88" text-anchor="middle" fill="#047857" font-family="Inter, sans-serif" font-size="11" font-weight="600">Coin-Cell Battery Budget</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <p class="text-base sm:text-lg font-medium text-slate-700 max-w-2xl">
+                    Standardized PQC payloads exceed the strict memory, energy, and processing budgets of low-power wireless sensor nodes.
+                </p>
+            </section>
+
+            <!-- =========================================================
+                 SLIDE 6: CONCEPT 5 — NIST PQC & LITERATURE INSIGHTS
+            ========================================================== -->
+            <section class="slide p-8 sm:p-12 items-center text-center" data-title="NIST PQC & Research Gap">
+                <div class="space-y-2 max-w-3xl">
+                        <span class="font-mono text-xs font-bold uppercase tracking-widest text-ju-emerald bg-ju-light px-3 py-1 rounded-full border border-ju-emerald/20">
+                            05 / LITERATURE SYNTHESIS
+                        </span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-ju-ink pt-1">
+                        NIST ML-KEM Sets Standards, Yet Edge Integration Lags
+                    </h2>
+                </div>
+
+                <!-- Hero SVG: NIST FIPS 203 Standard vs Lightweight Edge Gap -->
+                <div class="hero-frame rounded-2xl p-6 sm:p-8 w-full max-w-3xl my-auto">
+                    <svg viewBox="0 0 640 240" class="w-full h-auto max-h-[240px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Left Pillar: NIST FIPS 203 -->
+                        <g transform="translate(35, 30)">
+                            <rect x="0" y="0" width="220" height="180" rx="16" fill="#ECFDF5" stroke="#006838" stroke-width="2.5"/>
+                            <rect x="52" y="20" width="116" height="26" rx="13" fill="#006838"/>
+                            <text x="110" y="37" text-anchor="middle" fill="#FFFFFF" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">NIST FIPS 203</text>
+                            <text x="110" y="78" text-anchor="middle" fill="#004A28" font-family="Inter, sans-serif" font-size="18" font-weight="800">ML-KEM Standard</text>
+                            <text x="110" y="104" text-anchor="middle" fill="#065F46" font-family="Inter, sans-serif" font-size="12" font-weight="600">Module-Lattice Security</text>
+                            <text x="110" y="148" text-anchor="middle" fill="#047857" font-family="JetBrains Mono, monospace" font-size="10">Truong et al., 2026</text>
+                        </g>
+
+                        <!-- Center Bridge Gap -->
+                        <g>
+                            <line x1="265" y1="120" x2="375" y2="120" stroke="#B45309" stroke-width="3" stroke-dasharray="6 6"/>
+                            <rect x="273" y="96" width="94" height="48" rx="10" fill="#FFFBEB" stroke="#B45309" stroke-width="2"/>
+                            <text x="320" y="117" text-anchor="middle" fill="#92400E" font-family="JetBrains Mono, monospace" font-size="10" font-weight="800">RESEARCH</text>
+                            <text x="320" y="133" text-anchor="middle" fill="#B45309" font-family="JetBrains Mono, monospace" font-size="11" font-weight="800">GAP</text>
+                        </g>
+
+                        <!-- Right Pillar: Lightweight SPN Edge Ciphers -->
+                        <g transform="translate(385, 30)">
+                            <rect x="0" y="0" width="220" height="180" rx="16" fill="#FAF9F5" stroke="#006838" stroke-width="2" stroke-dasharray="5 4"/>
+                            <rect x="46" y="20" width="128" height="26" rx="13" fill="#D1FAE5"/>
+                            <text x="110" y="37" text-anchor="middle" fill="#004A28" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">IOT EDGE LAYER</text>
+                            <text x="110" y="78" text-anchor="middle" fill="#111827" font-family="Inter, sans-serif" font-size="18" font-weight="800">Lightweight SPN</text>
+                            <text x="110" y="104" text-anchor="middle" fill="#475569" font-family="Inter, sans-serif" font-size="12" font-weight="600">Ultra-Low Gate &amp; Energy</text>
+                            <text x="110" y="148" text-anchor="middle" fill="#64748B" font-family="JetBrains Mono, monospace" font-size="10">Liu et al., 2024; Kundu et al., 2025</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <p class="text-base sm:text-lg font-medium text-slate-700 max-w-2xl">
+                    Existing literature lacks a unified hybrid framework merging NIST ML-KEM with energy-efficient Substitution-Permutation Network ciphers.
+                </p>
+            </section>
+
+            <!-- =========================================================
+                 SLIDE 7: CONCEPT 6 — PROPOSED HYBRID ARCHITECTURE
+            ========================================================== -->
+            <section class="slide p-8 sm:p-12 items-center text-center" data-title="Proposed Hybrid Architecture">
+                <div class="space-y-2 max-w-3xl">
+                        <span class="font-mono text-xs font-bold uppercase tracking-widest text-ju-emerald bg-ju-light px-3 py-1 rounded-full border border-ju-emerald/20">
+                            06 / PROPOSED SOLUTION
+                        </span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-ju-ink pt-1">
+                        Hybrid Architecture Bridges ML-KEM and Lightweight SPN
+                    </h2>
+                </div>
+
+                <!-- Hero SVG: Clean Two-Stage Hybrid Bridge -->
+                <div class="hero-frame rounded-2xl p-6 sm:p-8 w-full max-w-3xl my-auto">
+                    <svg viewBox="0 0 640 240" class="w-full h-auto max-h-[240px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Stage 1: NIST ML-KEM -->
+                        <g transform="translate(30, 35)">
+                            <rect x="0" y="0" width="225" height="170" rx="16" fill="#ECFDF5" stroke="#006838" stroke-width="2.5"/>
+                            <text x="112" y="34" text-anchor="middle" fill="#006838" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">STAGE 01 • ASYMMETRIC</text>
+                            <text x="112" y="72" text-anchor="middle" fill="#004A28" font-family="Inter, sans-serif" font-size="20" font-weight="800">NIST ML-KEM</text>
+                            <line x1="40" y1="90" x2="185" y2="90" stroke="#A7F3D0" stroke-width="2"/>
+                            <text x="112" y="116" text-anchor="middle" fill="#065F46" font-family="Inter, sans-serif" font-size="13" font-weight="600">Quantum-Safe Handshake</text>
+                            <text x="112" y="140" text-anchor="middle" fill="#047857" font-family="JetBrains Mono, monospace" font-size="11">Session Seed Generation</text>
+                        </g>
+
+                        <!-- Center Fusion Arrow -->
+                        <g>
+                            <path d="M265 120H375" stroke="#006838" stroke-width="3.5" class="flow-dash"/>
+                            <polygon points="372,112 388,120 372,128" fill="#006838"/>
+                            <circle cx="320" cy="120" r="22" fill="#006838"/>
+                            <path d="M312 120H328M320 112V128" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+                        </g>
+
+                        <!-- Stage 2: Lightweight SPN Cipher -->
+                        <g transform="translate(390, 35)">
+                            <rect x="0" y="0" width="220" height="170" rx="16" fill="#006838" stroke="#004A28" stroke-width="2.5"/>
+                            <text x="110" y="34" text-anchor="middle" fill="#A7F3D0" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">STAGE 02 • SYMMETRIC</text>
+                            <text x="110" y="72" text-anchor="middle" fill="#FFFFFF" font-family="Inter, sans-serif" font-size="20" font-weight="800">Lightweight SPN</text>
+                            <line x1="40" y1="90" x2="180" y2="90" stroke="#059669" stroke-width="2"/>
+                            <text x="110" y="116" text-anchor="middle" fill="#ECFDF5" font-family="Inter, sans-serif" font-size="13" font-weight="600">High-Speed Data Encryption</text>
+                            <text x="110" y="140" text-anchor="middle" fill="#A7F3D0" font-family="JetBrains Mono, monospace" font-size="11">Ultra-Low Energy Footprint</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <p class="text-base sm:text-lg font-medium text-slate-700 max-w-2xl">
+                    Our hybrid framework pairs quantum-resistant lattice key encapsulation with a fast, low-power SPN block cipher.
+                </p>
+            </section>
+
+            <!-- =========================================================
+                 SLIDE 8: CONCEPT 7 — OPTIMIZED KEY SCHEDULE
+            ========================================================== -->
+            <section class="slide p-8 sm:p-12 items-center text-center" data-title="Optimized Key Schedule">
+                <div class="space-y-2 max-w-3xl">
+                        <span class="font-mono text-xs font-bold uppercase tracking-widest text-ju-emerald bg-ju-light px-3 py-1 rounded-full border border-ju-emerald/20">
+                            07 / CORE INNOVATION
+                        </span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-ju-ink pt-1">
+                        Optimized Key Schedule Minimizes Edge CPU &amp; RAM
+                    </h2>
+                </div>
+
+                <!-- Hero SVG: Streamlined Round-Key Pipeline + Efficiency Gauge -->
+                <div class="hero-frame rounded-2xl p-6 sm:p-8 w-full max-w-3xl my-auto">
+                    <svg viewBox="0 0 640 240" class="w-full h-auto max-h-[240px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Left: Streamlined Round-Key Pipeline -->
+                        <g transform="translate(30, 28)">
+                            <rect x="0" y="0" width="350" height="184" rx="16" fill="#FAF9F5" stroke="#006838" stroke-width="2"/>
+                            <text x="175" y="28" text-anchor="middle" fill="#004A28" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">ON-THE-FLY ROUND KEY EXPANSION</text>
+
+                            <!-- Master Key Seed -->
+                            <rect x="24" y="48" width="90" height="44" rx="8" fill="#006838"/>
+                            <text x="69" y="74" text-anchor="middle" fill="#FFFFFF" font-family="JetBrains Mono, monospace" font-size="12" font-weight="700">KEM Seed</text>
+
+                            <path d="M118 70H144" stroke="#006838" stroke-width="2.5" class="flow-dash"/>
+
+                            <!-- Permutation / S-Box Step -->
+                            <rect x="148" y="48" width="84" height="44" rx="8" fill="#ECFDF5" stroke="#006838" stroke-width="2"/>
+                            <text x="190" y="74" text-anchor="middle" fill="#004A28" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">Bit-Perm</text>
+
+                            <path d="M236 70H262" stroke="#006838" stroke-width="2.5" class="flow-dash"/>
+
+                            <!-- Subkey Output -->
+                            <rect x="266" y="48" width="62" height="44" rx="8" fill="#FEF3C7" stroke="#B45309" stroke-width="2"/>
+                            <text x="297" y="74" text-anchor="middle" fill="#92400E" font-family="JetBrains Mono, monospace" font-size="12" font-weight="800">K_r</text>
+
+                            <!-- Bottom Efficiency Badges -->
+                            <rect x="24" y="114" width="145" height="48" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+                            <text x="96" y="135" text-anchor="middle" fill="#006838" font-family="Inter, sans-serif" font-size="12" font-weight="800">Zero Key Storage</text>
+                            <text x="96" y="151" text-anchor="middle" fill="#64748B" font-family="JetBrains Mono, monospace" font-size="10">Minimal SRAM</text>
+
+                            <rect x="183" y="114" width="145" height="48" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+                            <text x="255" y="135" text-anchor="middle" fill="#006838" font-family="Inter, sans-serif" font-size="12" font-weight="800">Low Gate Count</text>
+                            <text x="255" y="151" text-anchor="middle" fill="#64748B" font-family="JetBrains Mono, monospace" font-size="10">Fast Clock Cycles</text>
+                        </g>
+
+                        <!-- Right: Energy Efficiency Meter -->
+                        <g transform="translate(405, 28)">
+                            <rect x="0" y="0" width="205" height="184" rx="16" fill="#ECFDF5" stroke="#006838" stroke-width="2.2"/>
+                            <!-- Gauge Arc -->
+                            <path d="M42 115 A 60 60 0 0 1 162 115" stroke="#A7F3D0" stroke-width="14" stroke-linecap="round"/>
+                            <path d="M42 115 A 60 60 0 0 1 142 68" stroke="#006838" stroke-width="14" stroke-linecap="round"/>
+                            <circle cx="102" cy="115" r="8" fill="#004A28"/>
+                            <line x1="102" y1="115" x2="138" y2="74" stroke="#004A28" stroke-width="3.5" stroke-linecap="round"/>
+                            <text x="102" y="148" text-anchor="middle" fill="#004A28" font-family="Inter, sans-serif" font-size="14" font-weight="800">Ultra-Low Power</text>
+                            <text x="102" y="166" text-anchor="middle" fill="#006838" font-family="JetBrains Mono, monospace" font-size="10">IoT Node Optimized</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <p class="text-base sm:text-lg font-medium text-slate-700 max-w-2xl">
+                    A custom lightweight key schedule derives quantum-hardened round keys on the fly without exhausting microcontroller memory.
+                </p>
+            </section>
+
+            <!-- =========================================================
+                 SLIDE 9: CONCEPT 8 — QUANTUM RESILIENCE & BENCHMARKING
+            ========================================================== -->
+            <section class="slide p-8 sm:p-12 items-center text-center" data-title="Resilience & Benchmarking">
+                <div class="space-y-2 max-w-3xl">
+                        <span class="font-mono text-xs font-bold uppercase tracking-widest text-ju-emerald bg-ju-light px-3 py-1 rounded-full border border-ju-emerald/20">
+                            08 / VALIDATION & METRICS
+                        </span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-ju-ink pt-1">
+                        Proven Grover Resistance With Superior Edge Performance
+                    </h2>
+                </div>
+
+                <!-- Hero SVG: Quantum Shield Deflecting Grover Probe + 3-Metric Chart -->
+                <div class="hero-frame rounded-2xl p-6 sm:p-8 w-full max-w-3xl my-auto">
+                    <svg viewBox="0 0 640 240" class="w-full h-auto max-h-[240px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Left: Security Proof Shield -->
+                        <g transform="translate(30, 28)">
+                            <rect x="0" y="0" width="245" height="184" rx="16" fill="#ECFDF5" stroke="#006838" stroke-width="2.2"/>
+                            <!-- Shield -->
+                            <path d="M122 24L168 42V86C168 116 148 138 122 146C96 138 76 116 76 86V42L122 24Z" fill="#006838"/>
+                            <path d="M107 85L117 95L139 73" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <!-- Deflected Grover Arrow -->
+                            <path d="M24 60L68 82L34 114" stroke="#B91C1C" stroke-width="2.5" stroke-dasharray="4 3"/>
+                            <text x="122" y="168" text-anchor="middle" fill="#004A28" font-family="Inter, sans-serif" font-size="13" font-weight="800">Grover Attack Deflected</text>
+                        </g>
+
+                        <!-- Right: 3-Metric Performance Bars -->
+                        <g transform="translate(300, 28)">
+                            <rect x="0" y="0" width="310" height="184" rx="16" fill="#FAF9F5" stroke="#CBD5E1" stroke-width="2"/>
+                            <text x="155" y="28" text-anchor="middle" fill="#111827" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">BENCHMARK TARGETS</text>
+
+                            <!-- Metric 1: Throughput -->
+                            <text x="24" y="60" fill="#111827" font-family="Inter, sans-serif" font-size="12" font-weight="700">Throughput</text>
+                            <rect x="115" y="48" width="170" height="14" rx="7" fill="#E2E8F0"/>
+                            <rect x="115" y="48" width="152" height="14" rx="7" fill="#006838"/>
+
+                            <!-- Metric 2: Low Latency -->
+                            <text x="24" y="102" fill="#111827" font-family="Inter, sans-serif" font-size="12" font-weight="700">Speed / Latency</text>
+                            <rect x="115" y="90" width="170" height="14" rx="7" fill="#E2E8F0"/>
+                            <rect x="115" y="90" width="144" height="14" rx="7" fill="#059669"/>
+
+                            <!-- Metric 3: Battery Efficiency -->
+                            <text x="24" y="144" fill="#111827" font-family="Inter, sans-serif" font-size="12" font-weight="700">Energy Saved</text>
+                            <rect x="115" y="132" width="170" height="14" rx="7" fill="#E2E8F0"/>
+                            <rect x="115" y="132" width="160" height="14" rx="7" fill="#B45309"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <p class="text-base sm:text-lg font-medium text-slate-700 max-w-2xl">
+                    Formal cryptanalysis verifies quantum key-recovery resistance while simulations validate high throughput and minimal battery drain.
+                </p>
+            </section>
+
+            <!-- =========================================================
+                 SLIDE 10: CONCEPT 9 — CONCLUSION & VISION
+            ========================================================== -->
+            <section class="slide p-8 sm:p-12 items-center text-center" data-title="Conclusion & Vision">
+                <div class="space-y-2 max-w-3xl">
+                        <span class="font-mono text-xs font-bold uppercase tracking-widest text-ju-emerald bg-ju-light px-3 py-1 rounded-full border border-ju-emerald/20">
+                            09 / CONCLUSION & VISION
+                        </span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-extrabold text-ju-ink pt-1">
+                        Forward-Secure Key Management for Post-Quantum IoT Networks
+                    </h2>
+                </div>
+
+                <!-- Hero SVG: Protected IoT/WSN Sensor Network under Emerald Quantum Shield -->
+                <div class="hero-frame rounded-2xl p-6 sm:p-8 w-full max-w-3xl my-auto">
+                    <svg viewBox="0 0 640 230" class="w-full h-auto max-h-[230px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Outer Quantum Protective Dome -->
+                        <path d="M90 190 C 90 65, 550 65, 550 190" fill="#ECFDF5" stroke="#006838" stroke-width="3" stroke-dasharray="8 5"/>
+
+                        <!-- Top Apex Shield -->
+                        <g transform="translate(296, 20)">
+                            <path d="M24 0L46 9V25C46 39 36 50 24 55C12 50 2 39 2 25V9L24 0Z" fill="#006838"/>
+                            <path d="M15 26L21 32L34 19" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </g>
+
+                        <!-- Central Hybrid Gateway -->
+                        <rect x="235" y="92" width="170" height="44" rx="10" fill="#006838"/>
+                        <text x="320" y="118" text-anchor="middle" fill="#FFFFFF" font-family="Inter, sans-serif" font-size="13" font-weight="800">Hybrid PQC Core</text>
+
+                        <!-- Connections to Edge Nodes -->
+                        <line x1="270" y1="136" x2="175" y2="168" stroke="#006838" stroke-width="2.2"/>
+                        <line x1="320" y1="136" x2="320" y2="168" stroke="#006838" stroke-width="2.2"/>
+                        <line x1="370" y1="136" x2="465" y2="168" stroke="#006838" stroke-width="2.2"/>
+
+                        <!-- Edge Sensor Nodes -->
+                        <rect x="125" y="168" width="100" height="34" rx="8" fill="#FFFFFF" stroke="#006838" stroke-width="2"/>
+                        <text x="175" y="189" text-anchor="middle" fill="#004A28" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">IoT Sensor</text>
+
+                        <rect x="270" y="168" width="100" height="34" rx="8" fill="#FFFFFF" stroke="#006838" stroke-width="2"/>
+                        <text x="320" y="189" text-anchor="middle" fill="#004A28" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">WSN Node</text>
+
+                        <rect x="415" y="168" width="100" height="34" rx="8" fill="#FFFFFF" stroke="#006838" stroke-width="2"/>
+                        <text x="465" y="189" text-anchor="middle" fill="#004A28" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700">Smart Edge</text>
+                    </svg>
+                </div>
+
+                <div class="w-full max-w-3xl flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                    <p class="text-base font-semibold text-ju-ink text-center sm:text-left">
+                        Delivering lasting quantum resilience without sacrificing network throughput or battery life.
+                    </p>
+                    <button onclick="goToSlide(1)" class="px-4 py-2 rounded-xl bg-ju-emerald hover:bg-ju-dark text-white text-xs font-mono font-bold transition shrink-0 shadow-sm">
+                        <i class="fa-solid fa-rotate-left mr-1.5"></i>Restart Deck
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</main>
+
+<!-- Bottom Navigation Dock -->
+<footer class="h-14 px-6 md:px-10 bg-white/95 border-t border-slate-200/80 flex items-center justify-between shrink-0 z-30">
+    <div class="flex items-center space-x-2">
+        <button onclick="prevSlide()" id="prevBtn" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition disabled:opacity-40">
+            <i class="fa-solid fa-arrow-left text-ju-emerald mr-1.5"></i>Prev
+        </button>
+        <button onclick="nextSlide()" id="nextBtn" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-ju-emerald hover:bg-ju-dark text-white transition disabled:opacity-40">
+            Next<i class="fa-solid fa-arrow-right ml-1.5"></i>
+        </button>
+    </div>
+
+    <!-- Clickable Progress Dots -->
+    <div id="dots" class="flex items-center space-x-1.5 sm:space-x-2"></div>
+
+    <div class="hidden md:flex items-center space-x-2 text-xs font-mono text-slate-400">
+        <span>Navigate:</span>
+        <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600">←</kbd>
+        <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600">→</kbd>
+        <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600">Space</kbd>
+    </div>
+</footer>
+
+<!-- Overview Grid Modal ('G') -->
+<div id="overviewModal" class="fixed inset-0 bg-slate-900/85 backdrop-blur-sm z-50 hidden flex-col p-6 md:p-10 overflow-y-auto">
+    <div class="max-w-5xl w-full mx-auto flex items-center justify-between mb-6 text-white">
+        <div>
+            <h2 class="font-serif text-2xl font-bold">Presentation Overview</h2>
+            <p class="text-xs text-slate-300 font-mono mt-0.5">Click any concept slide to jump directly • Press G or ESC to close</p>
+        </div>
+        <button onclick="toggleOverview()" class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+    <div id="overviewGrid" class="max-w-5xl w-full mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 my-auto"></div>
+</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+    let current = 1;
+    let overviewOpen = false;
+
+    function init() {
+        const dotsEl = document.getElementById('dots');
+        const gridEl = document.getElementById('overviewGrid');
+
+        slides.forEach((slide, i) => {
+            const num = i + 1;
+            const title = slide.getAttribute('data-title') || `Slide ${num}`;
+
+            // Progress Dot
+            const dot = document.createElement('button');
+            dot.className = 'slide-dot h-2.5 rounded-full transition-all duration-300 bg-slate-300 w-2.5';
+            dot.setAttribute('aria-label', `Go to Slide ${num}: ${title}`);
+            dot.onclick = () => goToSlide(num);
+            dotsEl.appendChild(dot);
+
+            // Overview Grid Card
+            const card = document.createElement('div');
+            card.className = 'ov-card bg-ju-ivory rounded-xl p-5 cursor-pointer border-2 border-transparent hover:border-ju-emerald transition flex flex-col justify-between h-32 shadow-md';
+            card.onclick = () => {
+                goToSlide(num);
+                toggleOverview();
+            };
+            card.innerHTML = `
+                    <span class="font-mono text-xs font-bold text-ju-emerald bg-ju-light px-2.5 py-1 rounded w-fit">${String(num).padStart(2, '0')}</span>
+                    <div class="font-serif text-base font-bold text-ju-ink leading-snug">${title}</div>
+                `;
+            gridEl.appendChild(card);
+        });
+
+        render();
+    }
+
+    function render() {
+        slides.forEach((s, i) => s.classList.toggle('active', i + 1 === current));
+        document.getElementById('currentNum').textContent = String(current).padStart(2, '0');
+        document.getElementById('prevBtn').disabled = current === 1;
+        document.getElementById('nextBtn').disabled = current === total;
+
+        document.querySelectorAll('.slide-dot').forEach((d, i) => {
+            if (i + 1 === current) {
+                d.classList.remove('w-2.5', 'bg-slate-300');
+                d.classList.add('w-7', 'bg-ju-emerald');
+            } else {
+                d.classList.remove('w-7', 'bg-ju-emerald');
+                d.classList.add('w-2.5', 'bg-slate-300');
+            }
+        });
+
+        document.querySelectorAll('.ov-card').forEach((c, i) => {
+            c.classList.toggle('border-ju-emerald', i + 1 === current);
+        });
+    }
+
+    function nextSlide() { if (current < total) { current++; render(); } }
+    function prevSlide() { if (current > 1) { current--; render(); } }
+    function goToSlide(n) { if (n >= 1 && n <= total) { current = n; render(); } }
+
+    function toggleOverview() {
+        const modal = document.getElementById('overviewModal');
+        overviewOpen = !overviewOpen;
+        modal.classList.toggle('hidden', !overviewOpen);
+        modal.classList.toggle('flex', overviewOpen);
+    }
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+            document.exitFullscreen().catch(() => {});
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'g' || e.key === 'G') { toggleOverview(); return; }
+        if (e.key === 'f' || e.key === 'F') { toggleFullscreen(); return; }
+        if (e.key === 'Escape' && overviewOpen) { toggleOverview(); return; }
+        if (overviewOpen) return;
+
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+    });
+
+    let startX = 0;
+    document.addEventListener('touchstart', e => { startX = e.changedTouches[0].screenX; }, { passive: true });
+    document.addEventListener('touchend', e => {
+        if (overviewOpen) return;
+        const diff = startX - e.changedTouches[0].screenX;
+        if (Math.abs(diff) > 50) diff > 0 ? nextSlide() : prevSlide();
+    }, { passive: true });
+
+    init();
+</script>
+</body>
+</html>
